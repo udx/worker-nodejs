@@ -4,3 +4,6 @@ TAG ?= latest
 DOCKER_IMAGE := $(IMAGE_NAME):$(TAG)
 CONTAINER_NAME ?= udx-worker-nodejs-container
 DEBUG ?= false
+
+# Directory containing application source code to be mounted
+APP_DIR ?= $(CURDIR)/app
