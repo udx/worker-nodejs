@@ -13,22 +13,13 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Fix ownership of the npm cache folder for the non-root user
-RUN mkdir -p /home/udx/.npm && chown -R udx:udx /home/udx/.npm
+RUN mkdir -p /home/${USER}/.npm && chown -R ${USER}:${USER} /home/${USER}/.npm
 
 # Switch back to non-root user for security
-USER udx
+USER ${USER}
 
 # Set environment variables (production mode)
 ENV NODE_ENV=production
-
-# Copy only the package files first to leverage Docker's caching mechanism
-COPY --chown=udx:udx package*.json ./
-
-# Install the application dependencies
-RUN npm ci --only=production
-
-# Copy the rest of the application code (if this step changes, only this part will invalidate the cache)
-COPY --chown=udx:udx . .
 
 # Expose the port your application will be running on
 EXPOSE 8080
