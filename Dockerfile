@@ -1,47 +1,37 @@
-FROM usabilitydynamics/udx-worker:0.1.0-beta.538
+# Use the udx-worker image as the base image
+FROM usabilitydynamics/udx-worker:0.1.0
 
-# Switch to root user
-USER root
-
-# Copy the custom entrypoint script to the specified path and ensure it is executable
-COPY ./bin/entrypoint.sh /usr/local/bin/init.sh
-RUN chmod +x /usr/local/bin/init.sh
-
-# Create work directory and set permissions
-RUN mkdir -p /usr/src/app && chown -R $USER:$USER /usr/src/app
-
-# Set work directory
+# Set the working directory
 WORKDIR /usr/src/app
 
-# Copy the entire application, including the custom worker.yml configuration file
-COPY . /usr/src/app
-RUN chown -R $USER:$USER /usr/src/app
+# Install Node.js 20 and pm2 as a process manager
+USER root
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs=20.17.0-1nodesource1 \
+    && npm install -g pm2@latest \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Update, install necessary packages, and install Node.js in a single step
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git=1:2.43.0-1ubuntu7.1 \
-    nano=7.2-2build1 \
-    tcpdump=4.99.4-3ubuntu4 && \
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs=20.17.0-1nodesource1 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# Fix ownership of the npm cache folder for the non-root user
+RUN mkdir -p /home/udx/.npm && chown -R udx:udx /home/udx/.npm
 
-# Clear npm cache or fix its permissions
-RUN npm cache clean --force && chown -R $USER:$USER /home/$USER/.npm
+# Switch back to non-root user for security
+USER udx
 
-# Install npm packages
-RUN npm install
+# Set environment variables (production mode)
+ENV NODE_ENV=production
 
-# Install @google-cloud/functions-framework
-RUN npm install @google-cloud/functions-framework
+# Copy only the package files first to leverage Docker's caching mechanism
+COPY --chown=udx:udx package*.json ./
 
-# Install global npm packages (run as root)
-RUN npm install -g
+# Install the application dependencies
+RUN npm ci --only=production
 
-# Switch back to default user
-USER $USER
+# Copy the rest of the application code (if this step changes, only this part will invalidate the cache)
+COPY --chown=udx:udx . .
 
+# Expose the port your application will be running on
 EXPOSE 8080
 
-# Use CMD to execute the entrypoint script
-CMD ["/usr/local/bin/init.sh"]
+# Use pm2-runtime to run the app, specify the ecosystem file
+CMD ["pm2-runtime", "src/configs/ecosystem.config.js"]
