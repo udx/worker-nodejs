@@ -3,7 +3,7 @@ IMAGE_NAME ?= udx-worker-nodejs
 TAG ?= latest
 DOCKER_IMAGE := $(IMAGE_NAME):$(TAG)
 CONTAINER_NAME ?= udx-worker-nodejs-container
-DEBUG ?= false
+APP_DIR ?= $(CURDIR)/src
 
-# Directory containing application source code to be mounted
-APP_DIR ?= $(CURDIR)/app
+# Optional Flags
+MULTIPLATFORM ?= false

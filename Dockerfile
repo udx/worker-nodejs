@@ -24,5 +24,8 @@ ENV NODE_ENV=production
 # Expose the port your application will be running on
 EXPOSE 8080
 
-# Use pm2-runtime to run the app, specify the ecosystem file
-CMD ["pm2-runtime", "src/configs/ecosystem.config.js"]
+# Health check for container health status
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s CMD curl -f http://localhost:8080/health || exit 1
+
+# Default to running PM2 with ecosystem, can override with CMD argument
+CMD ["sh", "-c", "${CMD:-pm2-runtime start src/configs/ecosystem.config.js}"]

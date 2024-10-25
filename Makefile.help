@@ -1,9 +1,8 @@
 # Help content for Makefile targets
 
 HELP_BUILD = "Build the Docker image:"
-HELP_RUN = "Run the Docker container with volume mount:"
-HELP_RUN_IT = "Run the Docker container interactively with volume mount:"
-HELP_RUN_WITH_VOLUME = "Run the Docker container with volume mount and port mapping (default):"
+HELP_RUN = "Run the Docker container (default with PM2):"
+HELP_RUN_IT = "Run the Docker container interactively with a shell:"
 HELP_EXEC = "Exec into the running container:"
 HELP_LOG = "View the container logs:"
 HELP_CLEAN = "Delete the running container:"
@@ -23,9 +22,6 @@ help:
 	@echo ""
 	@echo "$(HELP_RUN_IT)"
 	@echo "  make run-it"
-	@echo ""
-	@echo "$(HELP_RUN_WITH_VOLUME)"
-	@echo "  make run-with-volume"
 	@echo ""
 	@echo "$(HELP_EXEC)"
 	@echo "  make exec"
