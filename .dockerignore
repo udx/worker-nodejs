@@ -1,7 +1,6 @@
-# Ignore the following files and directories
-
 # Git files
 .git
+.gitignore
 
 # Docker configuration files
 .dockerignore
@@ -16,7 +15,7 @@ Dockerfile
 Thumbs.db
 
 # Node.js specific
-node_modules
+node_modules/
 npm-debug.log
 yarn.lock # if using npm, ignore yarn lock file
 
@@ -29,3 +28,7 @@ yarn.lock # if using npm, ignore yarn lock file
 # Tests and development scripts
 src/scripts/*
 tests/
+
+# Build artifacts
+dist/
+build/
