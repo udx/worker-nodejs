@@ -1,0 +1,9 @@
+# Variables
+IMAGE_NAME ?= udx-worker-nodejs
+TAG ?= latest
+DOCKER_IMAGE := $(IMAGE_NAME):$(TAG)
+CONTAINER_NAME ?= udx-worker-nodejs-container
+APP_DIR ?= $(CURDIR)/src
+
+# Optional Flags
+MULTIPLATFORM ?= false

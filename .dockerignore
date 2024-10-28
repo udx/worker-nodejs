@@ -1,0 +1,34 @@
+# Git files
+.git
+.gitignore
+
+# Docker configuration files
+.dockerignore
+Dockerfile
+
+# IDE configuration files
+*.idea
+*.vscode
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Node.js specific
+node_modules/
+npm-debug.log
+yarn.lock # if using npm, ignore yarn lock file
+
+# Log files
+*.log
+
+# Environment files (use Docker environment variables instead)
+.env
+
+# Tests and development scripts
+src/scripts/*
+tests/
+
+# Build artifacts
+dist/
+build/
