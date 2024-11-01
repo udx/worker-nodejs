@@ -6,39 +6,38 @@ ARG NODE_VERSION=20.x
 ARG NODE_PACKAGE_VERSION=20.17.0-1nodesource1
 ARG APP_PORT=8080
 
+# Set USER root early to handle permissions
+USER root
+
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy the PM2 configuration and application files
-COPY pm2/ /usr/src/app/pm2/
-COPY src/ /usr/src/app/
+# Create necessary directories and set permissions for ${USER}
+RUN mkdir -p /usr/src/app/pm2 /usr/src/app/logs /usr/src/app/.pm2 \
+    && mkdir -p /var/log/udx-worker-nodejs/.pm2 \
+    && chown -R ${USER}:${USER} /usr/src/app /usr/src/app/.pm2 /usr/src/app/pm2 /var/log/udx-worker-nodejs \
+    && chmod -R 755 /usr/src/app /var/log/udx-worker-nodejs
 
-# Install Node.js and PM2 as a process manager
-USER root
+# Copy application files and PM2 configuration
+COPY src/ /usr/src/app/
+COPY pm2/ecosystem.config.js /usr/src/app/pm2/
+
+# Set permissions for PM2 configuration
+RUN chown ${USER}:${USER} /usr/src/app/pm2/ecosystem.config.js \
+    && chmod 644 /usr/src/app/pm2/ecosystem.config.js
+
+# Install Node.js and PM2 using build arguments for version control
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
     && apt-get install -y nodejs=${NODE_PACKAGE_VERSION} \
     && npm install -g pm2@latest \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Create and fix ownership of necessary directories for the non-root user
-RUN mkdir -p /home/${USER}/.npm /var/log/udx-worker-nodejs/.pm2 /usr/src/app/logs \
-    && chown -R ${USER}:${USER} /home/${USER}/.npm /var/log/udx-worker-nodejs /usr/src/app/logs
-
-# Set environment variables for PM2
-ENV PM2_HOME=/var/log/udx-worker-nodejs/.pm2
-ENV PM2_LOG_DIR=/usr/src/app/logs
-ENV PM2_PID_PATH=/usr/src/app/logs
-ENV PM2_TMP_FOLDER=/usr/src/app/logs
-
-# Switch back to non-root user for security
+# Switch to the non-root user defined in the base image as ${USER}
 USER ${USER}
 
-# Set environment variables (production mode)
-ENV NODE_ENV=production
-
-# Expose the application port
+# Expose the application port from the build argument
 EXPOSE ${APP_PORT}
 
-# Default to running PM2 with ecosystem
-CMD ["pm2-runtime", "start", "/usr/src/app/pm2/ecosystem.config.js"]
+# Run PM2 with the ecosystem configuration in the foreground
+CMD ["pm2", "start", "--no-daemon", "/usr/src/app/pm2/ecosystem.config.js"]
