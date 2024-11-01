@@ -25,6 +25,14 @@ jobs:
         run: |
           make build
 
+      - name: Debug Permissions and User Context
+        run: |
+          docker run --rm udx-worker-nodejs:latest sh -c "
+            whoami;
+            ls -ld /usr/src/app/logs;
+            ls -l /usr/src/app;
+          "
+
       - name: Run Tests
         run: |
           make test
