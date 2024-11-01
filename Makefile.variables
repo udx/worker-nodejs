@@ -1,15 +1,26 @@
+# Docker Image Configuration
 IMAGE_NAME ?= udx-worker-nodejs
 TAG ?= latest
 DOCKER_IMAGE := $(IMAGE_NAME):$(TAG)
 CONTAINER_NAME ?= $(IMAGE_NAME)-container
+
+# Environment Settings
 NODE_ENV ?= development
+
+# Paths
 SRC_PATH ?= src
 CONTAINER_SRC_PATH ?= /usr/src/app
 LOG_DIR ?= /var/log/$(IMAGE_NAME)
+
+# Networking
 HOST_PORT ?= 8080
 CONTAINER_PORT ?= 8080
+
+# Optional Build Flags
 MULTIPLATFORM ?= false
 BUILD_PLATFORMS ?= linux/amd64,linux/arm64
 NO_CACHE ?= false
+
+# Runtime Options
 DETACHED ?= true
 CMD ?=

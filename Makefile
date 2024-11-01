@@ -1,108 +1,62 @@
-# Include variables and help modules
+# Include configuration variables and help
 include Makefile.variables
 include Makefile.help
 
-# Default target
 .DEFAULT_GOAL := help
 
-.PHONY: build run deploy run-it run-debug exec log clean test wait-container-ready dev-pipeline help
+.PHONY: build run deploy exec log clean test help
 
-# Build the Docker image ## Build the Docker image
-build:
+# Docker Commands for Reusability
+DOCKER_RUN := docker run --rm --name $(CONTAINER_NAME) -e NODE_ENV=$(NODE_ENV) -p $(HOST_PORT):$(CONTAINER_PORT) -v $(CURDIR):/usr/src/app
+DOCKER_EXEC := docker exec -it $(CONTAINER_NAME)
+DOCKER_CLEAN := docker rm -f $(CONTAINER_NAME) || true
+
+build: 
 	@echo "Building Docker image..."
-	@if [ "$(MULTIPLATFORM)" = "true" ]; then \
-		echo "Building Docker image for multiple platforms..."; \
-		docker buildx build --platform $(BUILD_PLATFORMS) -t $(DOCKER_IMAGE) $(if $(NO_CACHE),--no-cache) .; \
-	else \
-		echo "Building Docker image for the local platform..."; \
-		docker build -t $(DOCKER_IMAGE) $(if $(NO_CACHE),--no-cache) .; \
-	fi
+	@docker build $(if $(NO_CACHE),--no-cache) -t $(DOCKER_IMAGE) .
 	@echo "Docker image build completed."
 
-# Run Docker container (detached by default) ## Run the Docker container with the default app (detached by default)
+# Ensure clean start by stopping and removing any existing container with the same name
 run: clean
 	@echo "Running Docker container..."
-	@docker run $(if $(DETACHED),-d,-it) --rm --name $(CONTAINER_NAME) \
-		-e NODE_ENV=$(NODE_ENV) \
-		-v $(CURDIR)/$(SRC_PATH):$(CONTAINER_SRC_PATH) -p $(HOST_PORT):$(CONTAINER_PORT) \
-		$(DOCKER_IMAGE) $(if $(CMD),$(CMD),)
-	@if [ "$(DETACHED)" = "true" ]; then \
-		$(MAKE) wait-container-ready; \
-		$(MAKE) log; \
-	fi
+	@$(DOCKER_RUN) $(if $(DETACHED),-d,-it) $(DOCKER_IMAGE)
+	@echo "Container started successfully."
 
-# Deploy application (production mode) ## Deploy application in production mode
-deploy: clean
-	@echo "Deploying application..."
-	@docker run -d --rm --name $(CONTAINER_NAME) \
-		-v $(CURDIR)/$(SRC_PATH):/usr/src/app \
-		-p $(HOST_PORT):8080 \
-		$(DOCKER_IMAGE)
-	@echo "Application is accessible at http://localhost:$(HOST_PORT)"
-	@$(MAKE) wait-container-ready
-
-# Run Docker container in interactive mode ## Run Docker container interactively
-run-it: CMD=/bin/sh
-run-it: DETACHED=false
-run-it: run
-
-# Run Docker container in debug mode ## Run Docker container in debug mode with shell access
-run-debug: CMD=/bin/sh
-run-debug: DETACHED=false
-run-debug: run
-
-# Execute a command in the running container ## Execute a command inside the running container
 exec:
 	@echo "Executing command in Docker container..."
-	@docker exec -it $(CONTAINER_NAME) $(if $(CMD),$(CMD),/bin/sh)
+	@$(DOCKER_EXEC) $(if $(CMD),$(CMD),/bin/sh)
 
-# View the container logs ## View logs of the running container
 log:
 	@echo "Viewing Docker container logs..."
-	@docker logs $(CONTAINER_NAME) || echo "No running container to log."
+	@docker logs $(CONTAINER_NAME)
 
-# Stop and remove the running container if it exists ## Stop and remove the running container
 clean:
 	@echo "Stopping and removing Docker container if it exists..."
-	@docker rm -f $(CONTAINER_NAME) || true
+	@$(DOCKER_CLEAN)
 
-# Wait for container to be ready using PM2 readiness check ## Wait until PM2 services in the container are ready
-wait-container-ready:
-	@echo "Waiting for container and PM2 services to be ready..."
-	@counter=0; \
-	while docker ps -q -f name=$(CONTAINER_NAME) | grep -q .; do \
-		if $(MAKE) exec CMD="pm2 list" | grep -q "online"; then \
-			echo "PM2 services are ready."; \
-			exit 0; \
-		elif [ $$counter -ge 30 ]; then \
-			echo "Timeout: PM2 services did not start as expected."; \
-			echo "Displaying container logs for troubleshooting:"; \
-			$(MAKE) log; \
-			exit 1; \
-		fi; \
-		echo "Waiting for PM2 services to be ready..."; \
-		sleep 2; \
-		counter=$$((counter + 1)); \
-	done
-	echo "Container stopped unexpectedly."
-	$(MAKE) log
-	exit 1
-
-# Run tests ## Run all tests or a specific test script if TEST_SCRIPT is provided
-test: build run
-	@if [ -z "$(TEST_SCRIPT)" ]; then \
-		echo "Executing all test scripts..."; \
-		for test_script in $(SRC_PATH)/tests/*.sh; do \
-			echo "Running $$(basename $$test_script)..."; \
-			$(MAKE) exec CMD="sh $(CONTAINER_SRC_PATH)/tests/$$(basename $$test_script)" || echo "Test $$(basename $$test_script) failed"; \
+# Run tests with test-specific environment, and clean up container after tests
+test: clean
+	@echo "Running tests with NODE_ENV=test..."
+	@EXIT_CODE=0; \
+	docker run --name $(CONTAINER_NAME) --rm -e NODE_ENV=test -v $(CURDIR):/usr/src/app $(DOCKER_IMAGE) /bin/sh -c '\
+		for t in /usr/src/app/src/tests/*.sh; do \
+			if [ -f "$$t" ]; then \
+				echo "Running test $$t..."; \
+				sh $$t || { echo "Test $$t failed"; EXIT_CODE=1; }; \
+			else \
+				echo "No test scripts found in /usr/src/app/src/tests."; \
+				EXIT_CODE=1; \
+			fi; \
 		done; \
+		exit $$EXIT_CODE' || EXIT_CODE=$$?; \
+	if [ $$EXIT_CODE -eq 0 ]; then \
+		echo "All tests passed."; \
 	else \
-		echo "Running test script $(TEST_SCRIPT)..."; \
-		$(MAKE) exec CMD="sh $(CONTAINER_SRC_PATH)/tests/$(TEST_SCRIPT)"; \
-	fi
-	@$(MAKE) clean
-	@echo "All tests completed."
+		echo "Some tests failed."; \
+	fi; \
+	exit $$EXIT_CODE
 
-# Development pipeline ## Run the full development pipeline, including build and tests
-dev-pipeline: test
-	@echo "Development pipeline completed successfully."
+deploy: clean
+	@echo "Deploying application..."
+	@$(DOCKER_RUN) -d $(DOCKER_IMAGE)
+	@echo "Application deployed and accessible at http://localhost:$(HOST_PORT)"
