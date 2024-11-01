@@ -23,7 +23,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t udx-worker-nodejs:latest .
+          make build
 
       - name: Run Tests
         run: |
