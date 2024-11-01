@@ -7,8 +7,9 @@
 Dockerfile
 
 # IDE configuration files - User-specific configurations that don’t affect the container
-*.idea
-*.vscode
+.idea/
+.vscode/
+*.iml
 
 # System files - OS-specific and hidden system files
 .DS_Store
@@ -23,11 +24,19 @@ npm-debug.log
 # yarn.lock
 
 # Log files - Avoid unnecessary logs in the image
+logs/
 *.log
 
 # Environment files (use Docker environment variables instead)
 .env
 
 # Development and testing files - Exclude files meant for development and testing
-src/tests/         # Exclude test scripts
-src/scripts/       # Exclude any development-specific scripts
+src/tests/          # Exclude test scripts
+src/scripts/        # Exclude any development-specific scripts
+Makefile
+Makefile.help
+Makefile.variables
+
+# Documentation and metadata files
+README.md
+SECURITY.md
