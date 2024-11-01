@@ -27,7 +27,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          docker run --rm -e NODE_ENV=test udx-worker-nodejs:latest make test
+          make test
 
       - name: Cache Trivy DB
         uses: actions/cache@v4
