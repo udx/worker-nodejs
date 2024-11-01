@@ -26,7 +26,8 @@ COPY pm2/ecosystem.config.js /usr/src/app/pm2/
 # Adjust permissions for the application directory and PM2 configuration
 RUN chown -R ${USER}:${USER} /usr/src/app /usr/src/app/pm2 /usr/src/app/logs /var/log/udx-worker-nodejs \
     && chmod -R 755 /usr/src/app /var/log/udx-worker-nodejs \
-    && chmod 644 /usr/src/app/pm2/ecosystem.config.js
+    && chmod 644 /usr/src/app/pm2/ecosystem.config.js \
+    && chmod 755 /usr/src/app/logs
 
 # Switch to the non-root user defined in the base image as ${USER}
 USER ${USER}
