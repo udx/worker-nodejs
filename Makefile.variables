@@ -1,18 +1,20 @@
 # Docker Image Configuration
+REGISTRY ?= docker.io
 IMAGE_NAME ?= udx-worker-nodejs
 TAG ?= latest
-DOCKER_IMAGE := $(IMAGE_NAME):$(TAG)
+DOCKER_IMAGE := $(if $(REGISTRY),$(REGISTRY)/)$(IMAGE_NAME):$(TAG)
 CONTAINER_NAME ?= $(IMAGE_NAME)-container
 
 # Environment Settings
 NODE_ENV ?= development
 
-# Paths
+# Paths Configuration
 SRC_PATH ?= src
 CONTAINER_SRC_PATH ?= /usr/src/app
+HOST_LOG_DIR ?= ./logs
 LOG_DIR ?= /var/log/$(IMAGE_NAME)
 
-# Networking
+# Networking Configuration
 HOST_PORT ?= 8080
 CONTAINER_PORT ?= 8080
 
@@ -23,4 +25,4 @@ NO_CACHE ?= false
 
 # Runtime Options
 DETACHED ?= true
-CMD ?=
+CMD ?= /bin/sh
