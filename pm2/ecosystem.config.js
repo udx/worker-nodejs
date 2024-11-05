@@ -1,16 +1,18 @@
 const path = require("path");
 
+// Use environment variables or defaults
 const LOG_DIR = process.env.LOG_DIR || "/var/log/udx-worker-nodejs";
-const SCRIPT = process.env.SCRIPT || path.join(__dirname, "../src/index.js"); // Adjusted path to src/index.js
-const WATCH_MODE = process.env.WATCH_MODE === "true" || false;
+const SCRIPT = process.env.SCRIPT || path.join(__dirname, "../src/index.js");
+const WATCH_MODE = process.env.WATCH_MODE === "true";
 const ENVIRONMENT = process.env.NODE_ENV || "production";
+const INSTANCE_MODE = ENVIRONMENT === "production" ? "max" : 1;
 
 module.exports = {
   apps: [
     {
       name: "udx-worker-nodejs",
       script: SCRIPT,
-      instances: ENVIRONMENT === "production" ? "max" : 1,
+      instances: INSTANCE_MODE,
       exec_mode: ENVIRONMENT === "production" ? "cluster" : "fork",
       env: {
         PM2_HOME: path.join(LOG_DIR, ".pm2"),
