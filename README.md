@@ -1,14 +1,14 @@
 # UDX Worker Node.js
 
-A flexible Docker image designed to run various Node.js-based tasks, services, or APIs. Built on the udx-worker base image, it leverages Docker and PM2 for process management, making it ideal for both development and production environments.
+A versatile Docker image for running Node.js applications, providing a ready-to-use environment for deploying and managing your JavaScript projects with PM2.
 
 ## Overview
 
-This image serves as a general-purpose environment for running Node.js applications. It’s well-suited for API servers, task runners, and service-based applications that need an optimized containerized setup.
+This image is designed as a general-purpose base for Node.js application development and deployment. It includes essential configurations to streamline your setup, making it easy to get started with APIs, task runners, and other Node.js services.
 
 ### Based on udx-worker
 
-As part of the udx-worker suite, this image inherits secure and efficient configurations, providing a robust foundation for Node.js applications.
+Built on `udx-worker`, this image benefits from secure, resource-efficient configurations and best practices, providing a reliable foundation for Node.js applications.
 
 ## Development
 
@@ -18,19 +18,15 @@ As part of the udx-worker suite, this image inherits secure and efficient config
 
 ### Quick Start
 
-Place your Node.js scripts in the src/ directory to begin using this image. For example, you can add example.js:
-
-// src/example.js
-console.log("Hello from UDX Worker Node.js!");
-
+This image serves as a base for your Node.js applications. The src/tests/ directory includes sample tests for verifying functionality, but it does not contain application code by default.
 
 ### Running Built-In Tests
 
 1. Clone this repository:
 
 ```
-git clone https://github.com/udx/udx-worker-php.git
-cd udx-worker-php
+git clone https://github.com/udx/udx-worker-nodejs.git
+cd udx-worker-nodejs
 ```
 
 2. Build the Docker image:
@@ -51,29 +47,29 @@ You can add additional tests in the `src/tests/` directory as needed.
 
 ### Deploying Using the Pre-Built Image
 
-If you want to use the pre-built image directly from Docker Hub without cloning the repository:
+To use the pre-built image directly from Docker Hub without cloning the repository:
 
 1. Pull the Image:
 
 ```
-docker pull usabilitydynamics/udx-worker-php:latest
+docker pull usabilitydynamics/udx-worker-nodejs:latest
 ```
 
 2. Run the container with your application code:
 
 ```
-docker run -d --name my-php-app \
-  -v $(pwd)/my-php-app:/var/www/html \
-  -p 80:80 \
-  usabilitydynamics/udx-worker-php:latest
+docker run -d --name my-node-app \
+  -v $(pwd)/my-node-app:/usr/src/app \
+  -p 3000:3000 \
+  usabilitydynamics/udx-worker-nodejs:latest
 ```
 
-This serves your application at http://localhost.
+This serves your application at http://localhost:3000.
 
 3. Stop and remove the container when done:
 
 ```
-docker rm -f my-php-app
+docker rm -f my-node-app
 ```
 
 ### Deploying Using a Locally Built Image (Makefile Approach)
@@ -94,22 +90,22 @@ make run
 
 By default, this command runs the container with the code located in the `src/` directory of this repository.
 
-3. Deploy Application Code. If your PHP application code is located in a different directory or repository, use the deploy target to mount it as a volume:
+3. Deploy Application Code: If your Node.js application code is located in a different directory or repository, use the deploy target to mount it as a volume:
 
 ```
-APP_PATH=/path/to/your-php-app make deploy
+APP_PATH=/path/to/your-node-app make deploy
 ```
 
-- Replace `/path/to/your-php-app` with the path to your PHP application directory.
-- This command will mount your specified application directory into the container’s `/var/www/html` directory, allowing you to run your custom application directly.
+- Replace `/path/to/your-node-app` with the path to your Node.js application directory.
+- This command will mount your specified application directory into the container’s /usr/src/app directory, allowing you to run your custom application directly.
 
 ## Configuration
 
-You can configure build and runtime variables in `Makefile.variables`:
+You can configure build and runtime variables in Makefile.variables:
 
-- PHP and NGINX versions. _(Only PHP8.3 supported for now)_
-- Port mappings
-- Source paths
+- Node.js Version: Specify the version of Node.js required for your application.
+- Port Mappings: Customize the ports to match your network setup.
+- Source Paths: Define paths for application source files, logs, and other resources.
 
 Adjust these variables to suit your environment or specific deployment requirements.
 
