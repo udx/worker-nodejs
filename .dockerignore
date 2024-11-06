@@ -1,4 +1,4 @@
-# Git files
+# Git files - No need to include Git metadata in the image
 .git
 .gitignore
 
@@ -6,29 +6,37 @@
 .dockerignore
 Dockerfile
 
-# IDE configuration files
-*.idea
-*.vscode
+# IDE configuration files - User-specific configurations that don’t affect the container
+.idea/
+.vscode/
+*.iml
 
-# System files
+# System files - OS-specific and hidden system files
 .DS_Store
 Thumbs.db
 
-# Node.js specific
+# Node.js specific - Exclude dependencies and lock files not required at build time
 node_modules/
 npm-debug.log
-yarn.lock # if using npm, ignore yarn lock file
+# Uncomment if using npm exclusively
+# package-lock.json
+# Uncomment if using yarn exclusively
+# yarn.lock
 
-# Log files
+# Log files - Avoid unnecessary logs in the image
+logs/
 *.log
 
 # Environment files (use Docker environment variables instead)
 .env
 
-# Tests and development scripts
-src/scripts/*
-tests/
+# Development and testing files - Exclude files meant for development and testing
+src/tests/          # Exclude test scripts
+src/scripts/        # Exclude any development-specific scripts
+Makefile
+Makefile.help
+Makefile.variables
 
-# Build artifacts
-dist/
-build/
+# Documentation and metadata files
+README.md
+SECURITY.md
