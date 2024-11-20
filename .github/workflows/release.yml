@@ -2,8 +2,8 @@ name: Release UDX Worker NodeJS
 
 on:
   push:
-    # branches:
-    #   - "latest"
+    branches:
+      - "latest"
 
 jobs:
   test-pipeline:
