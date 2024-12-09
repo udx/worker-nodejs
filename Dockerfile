@@ -20,8 +20,7 @@ USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Node.js and PM2
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
     && apt-get install -y --no-install-recommends nodejs=${NODE_PACKAGE_VERSION} \
     && npm install -g pm2@latest \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
