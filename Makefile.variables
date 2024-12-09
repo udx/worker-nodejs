@@ -3,7 +3,7 @@ REGISTRY ?= docker.io
 IMAGE_NAME ?= usabilitydynamics/udx-worker-nodejs
 TAG ?= latest
 DOCKER_IMAGE := $(if $(REGISTRY),$(REGISTRY)/)$(IMAGE_NAME):$(TAG)
-CONTAINER_NAME ?= $(IMAGE_NAME)-container
+CONTAINER_NAME ?= udx-worker-nodejs-container
 
 # Environment Settings
 NODE_ENV ?= development
