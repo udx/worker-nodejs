@@ -16,10 +16,12 @@ WORKDIR /usr/src/app
 # Use root user for package installations and file permissions setup
 USER root
 
+# Set the shell with pipefail option
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 # Install Node.js and PM2
-RUN apt-get update && apt-get install -y curl \
-    && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
-    && apt-get install -y nodejs=${NODE_PACKAGE_VERSION} \
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
+    && apt-get install -y --no-install-recommends nodejs=${NODE_PACKAGE_VERSION} \
     && npm install -g pm2@latest \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -29,9 +31,9 @@ COPY pm2/ecosystem.config.js /usr/src/app/pm2/
 COPY src/tests/ /usr/src/app/tests/
 
 # Ensure the log directory exists, then adjust permissions
-RUN mkdir -p ${LOG_DIR} \
-    && chown -R ${USER}:${USER} /usr/src/app /usr/src/app/pm2 /usr/src/app/tests ${LOG_DIR} \
-    && chmod -R 755 /usr/src/app ${LOG_DIR} \
+RUN mkdir -p "${LOG_DIR}" \
+    && chown -R "${USER}:${USER}" /usr/src/app /usr/src/app/pm2 /usr/src/app/tests "${LOG_DIR}" \
+    && chmod -R 755 /usr/src/app "${LOG_DIR}" \
     && chmod 644 /usr/src/app/pm2/ecosystem.config.js
 
 # Expose the application port
