@@ -5,17 +5,24 @@ include Makefile.help
 # Default target
 .DEFAULT_GOAL := help
 
+# Phony targets ensure Make doesn't get confused by filenames
 .PHONY: build run deploy run-it clean exec log test dev-pipeline run-test run-all-tests wait-container-ready
 
 # Docker Commands for Reusability
-DOCKER_RUN := docker run --rm --name $(CONTAINER_NAME) \
+DOCKER_RUN_BASE := docker run --rm --name $(CONTAINER_NAME) \
     -e NODE_ENV=$(NODE_ENV) \
     -e LOG_DIR=$(LOG_DIR) \
     -e WATCH_MODE=$(WATCH_MODE) \
     -p $(HOST_PORT):$(CONTAINER_PORT) \
     -v $(CURDIR):/usr/src/app
 
-DOCKER_RUN_DETACHED := $(DOCKER_RUN) -d $(DOCKER_IMAGE)
+# Determine if we should run in detached mode or interactively
+ifeq ($(INTERACTIVE),true)
+    DOCKER_RUN := $(DOCKER_RUN_BASE) -it
+else
+    DOCKER_RUN := $(DOCKER_RUN_BASE) -d
+endif
+
 DOCKER_EXEC := docker exec -it $(CONTAINER_NAME)
 DOCKER_CLEAN := docker rm -f $(CONTAINER_NAME) || true
 
@@ -34,20 +41,13 @@ build:
 # Run Docker container in specified environment with readiness check
 run: clean
 	@echo "Running Docker container..."
-	@$(DOCKER_RUN) $(if $(DETACHED),-d,-it) $(DOCKER_IMAGE)
+	@$(DOCKER_RUN) $(DOCKER_IMAGE)
 	@$(MAKE) --no-print-directory wait-container-ready
 	@echo "Container started successfully."
 
-# Deploy application in production mode with readiness check
-deploy: clean
-	@echo "Deploying application in production mode..."
-	@NODE_ENV=production $(DOCKER_RUN_DETACHED)
-	@$(MAKE) --no-print-directory wait-container-ready
-	@echo "Application deployed and accessible at http://localhost:$(HOST_PORT)"
-
 # Run Docker container in interactive mode
 run-it:
-	@$(MAKE) --no-print-directory run INTERACTIVE=true CMD="/bin/sh"
+	$(MAKE) run INTERACTIVE=true
 
 # Execute a command inside the running container
 exec:
@@ -69,10 +69,13 @@ wait-container-ready:
 	@echo "Waiting for the container to be ready..."
 	@counter=0; \
 	while ! curl -s -o /dev/null -w "%{http_code}" http://localhost:$(HOST_PORT) | grep -q "200"; do \
-		if [ $$counter -ge 30 ]; then \
-			echo "Timeout: Application did not start"; \
-			$(MAKE) --no-print-directory log || echo "No logs available"; \
-			exit 1; \
+		if [ $$counter -ge 5 ]; then \
+			echo "Application may not be ready, checking logs..."; \
+			docker logs $(CONTAINER_NAME); \
+			if [ $$counter -ge 30 ]; then \
+				echo "Timeout: Application did not start"; \
+				exit 1; \
+			fi; \
 		fi; \
 		echo "Waiting for application to be ready..."; \
 		sleep 1; \
@@ -81,7 +84,7 @@ wait-container-ready:
 	@echo "Container is ready."
 
 # Run a specific test script (specified by TEST_SCRIPT)
-run-test: clean
+run-test: clean run
 	@echo "Running test script $(TEST_SCRIPT) in test environment..."
 	@NODE_ENV=test $(DOCKER_RUN_DETACHED)
 	@$(MAKE) --no-print-directory wait-container-ready
@@ -93,7 +96,7 @@ run-test: clean
 	@$(DOCKER_CLEAN)
 
 # Run all tests in the tests directory with test environment
-run-all-tests: clean
+run-all-tests: clean run
 	@echo "Starting Docker container for test execution in test environment..."
 	@NODE_ENV=test $(DOCKER_RUN_DETACHED)
 	@$(MAKE) --no-print-directory wait-container-ready

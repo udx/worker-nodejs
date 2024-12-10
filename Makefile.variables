@@ -1,9 +1,9 @@
 # Docker Image Configuration
 REGISTRY ?= docker.io
-IMAGE_NAME ?= udx-worker-nodejs
+IMAGE_NAME ?= usabilitydynamics/udx-worker-nodejs
 TAG ?= latest
 DOCKER_IMAGE := $(if $(REGISTRY),$(REGISTRY)/)$(IMAGE_NAME):$(TAG)
-CONTAINER_NAME ?= $(IMAGE_NAME)-container
+CONTAINER_NAME ?= udx-worker-nodejs-container
 
 # Environment Settings
 NODE_ENV ?= development
@@ -12,7 +12,7 @@ NODE_ENV ?= development
 SRC_PATH ?= src
 CONTAINER_SRC_PATH ?= /usr/src/app
 HOST_LOG_DIR ?= ./logs
-LOG_DIR ?= /var/log/$(IMAGE_NAME)
+LOG_DIR ?= /var/log/udx-worker-nodejs
 
 # Networking Configuration
 HOST_PORT ?= 8080
