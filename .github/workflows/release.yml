@@ -10,6 +10,7 @@ on:
       - 'ci/**'
       - 'pm2/**'
       - 'src/**'
+      - LICENSE
 
 jobs:
   docker-release:

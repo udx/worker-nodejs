@@ -8,6 +8,7 @@ on:
       - 'Dockerfile'
       - 'pm2/**'
       - 'src/**'
+      - LICENSE
 
 jobs:
   build:
