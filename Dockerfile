@@ -29,6 +29,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
 COPY src/ /usr/src/app/
 COPY pm2/ecosystem.config.js /usr/src/app/pm2/
 COPY src/tests/ /usr/src/app/tests/
+COPY LICENSE /usr/src/app/LICENSE
 
 # Ensure the log directory exists, then adjust permissions
 RUN mkdir -p "${LOG_DIR}" \
