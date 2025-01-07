@@ -1,0 +1,8 @@
+---
+kind: workerService
+version: udx.io/worker-v1/service
+services:
+  - name: "nodejs_example"
+    enabled: "true"
+    autostart: "true"
+    command: "node src/index.js"
