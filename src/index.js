@@ -8,5 +8,11 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
+
+  // Run timer to print a message every 5 seconds
+  const timer = setInterval(() => {
+    process.stdout.write('Still running...\n');
+  }, 2000);
+
   process.stdout.write('\n');
 });
