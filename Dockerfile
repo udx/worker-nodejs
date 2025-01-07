@@ -1,5 +1,5 @@
 # Use the udx-worker as the base image
-FROM usabilitydynamics/udx-worker:0.5.0
+FROM usabilitydynamics/udx-worker:0.6.0
 
 # Set build arguments for Node.js version, application port, and log directory
 ARG NODE_VERSION=20.x
