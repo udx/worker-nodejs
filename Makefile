@@ -12,7 +12,6 @@ include Makefile.help
 DOCKER_RUN_BASE := docker run --rm --name $(CONTAINER_NAME) \
     -e NODE_ENV=$(NODE_ENV) \
     -e LOG_DIR=$(LOG_DIR) \
-    -e WATCH_MODE=$(WATCH_MODE) \
     -p $(HOST_PORT):$(CONTAINER_PORT) \
     -v $(CURDIR):/usr/src/app
 
@@ -41,7 +40,7 @@ build:
 # Run Docker container in specified environment with readiness check
 run: clean
 	@echo "Running Docker container..."
-	@$(DOCKER_RUN) $(DOCKER_IMAGE)
+	@$(DOCKER_RUN) $(DOCKER_IMAGE) $(CMD)
 	@$(MAKE) --no-print-directory wait-container-ready
 	@echo "Container started successfully."
 
@@ -52,7 +51,7 @@ run-it:
 # Execute a command inside the running container
 exec:
 	@echo "Executing command in Docker container..."
-	@$(DOCKER_EXEC) $(if $(CMD),$(CMD),/bin/sh)
+	@$(DOCKER_EXEC) $(if $(CMD),$(CMD),/bin/bash)
 
 # View logs of the running container
 log:
