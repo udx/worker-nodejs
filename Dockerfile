@@ -1,9 +1,9 @@
 # Use the udx-worker as the base image
-FROM usabilitydynamics/udx-worker:0.6.0
+FROM usabilitydynamics/udx-worker:0.7.0
 
 # Add metadata labels
 LABEL maintainer="UDX"
-LABEL version="0.6.0"
+LABEL version="0.7.0"
 
 # Set build arguments for Node.js version, application port, and log directory
 ARG NODE_VERSION=22.x
@@ -55,4 +55,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 USER ${USER}
 
 # Set the default command
-CMD ["node", "--version"]
+CMD ["tail", "-f", "/dev/null"]
