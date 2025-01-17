@@ -47,10 +47,6 @@ RUN mkdir -p "${LOG_DIR}" \
 # Expose the application port
 EXPOSE ${APP_PORT}
 
-# Add healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${APP_PORT}/health || exit 1
-
 # Switch to the non-root user defined in the base image as ${USER}
 USER ${USER}
 
