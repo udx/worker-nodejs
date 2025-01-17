@@ -4,4 +4,4 @@ version: udx.io/worker-v1/service
 services:
   - name: "nodejs_example"
     autostart: "true"
-    command: "node src/index.js"
+    command: "node index.js"
