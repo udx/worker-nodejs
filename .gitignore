@@ -30,6 +30,3 @@ docker-compose.override.yml
 dist/
 build/
 
-# PM2 logs and ecosystem-related files
-pm2/logs/
-pm2/ecosystem.config.js.log

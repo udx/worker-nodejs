@@ -1,3 +1,4 @@
+---
 name: Build and Test Docker Image
 
 on:
@@ -6,7 +7,6 @@ on:
     paths:
       - '.github/workflows/build-and-test.yml'
       - 'Dockerfile'
-      - 'pm2/**'
       - 'src/**'
       - LICENSE
 

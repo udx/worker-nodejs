@@ -12,13 +12,11 @@ include Makefile.help
 DOCKER_RUN_BASE := docker run --rm --name $(CONTAINER_NAME) \
     -e NODE_ENV=$(NODE_ENV) \
     -e LOG_DIR=$(LOG_DIR) \
-    -e WATCH_MODE=$(WATCH_MODE) \
-    -p $(HOST_PORT):$(CONTAINER_PORT) \
-    -v $(CURDIR):/usr/src/app
+    -p $(HOST_PORT):$(CONTAINER_PORT)
 
 # Determine if we should run in detached mode or interactively
 ifeq ($(INTERACTIVE),true)
-    DOCKER_RUN := $(DOCKER_RUN_BASE) -it
+    DOCKER_RUN := $(DOCKER_RUN_BASE) -it --entrypoint $(CMD)
 else
     DOCKER_RUN := $(DOCKER_RUN_BASE) -d
 endif
@@ -47,12 +45,12 @@ run: clean
 
 # Run Docker container in interactive mode
 run-it:
-	$(MAKE) run INTERACTIVE=true
+	$(MAKE) run INTERACTIVE=true CMD="/bin/bash"
 
 # Execute a command inside the running container
 exec:
 	@echo "Executing command in Docker container..."
-	@$(DOCKER_EXEC) $(if $(CMD),$(CMD),/bin/sh)
+	@$(DOCKER_EXEC) $(if $(CMD),$(CMD),/bin/bash)
 
 # View logs of the running container
 log:
@@ -86,7 +84,7 @@ wait-container-ready:
 # Run a specific test script (specified by TEST_SCRIPT)
 run-test: clean run
 	@echo "Running test script $(TEST_SCRIPT) in test environment..."
-	@NODE_ENV=test $(DOCKER_RUN_DETACHED)
+	@NODE_ENV=test
 	@$(MAKE) --no-print-directory wait-container-ready
 	@if [ -z "$(TEST_SCRIPT)" ]; then \
 		echo "Error: TEST_SCRIPT variable is not set. Specify a script to run, e.g., make run-test TEST_SCRIPT=example.sh"; \
@@ -98,15 +96,14 @@ run-test: clean run
 # Run all tests in the tests directory with test environment
 run-all-tests: clean run
 	@echo "Starting Docker container for test execution in test environment..."
-	@NODE_ENV=test $(DOCKER_RUN_DETACHED)
+	@NODE_ENV=test
 	@$(MAKE) --no-print-directory wait-container-ready
 	@echo "Executing all test scripts..."
 	@for test_script in $(SRC_PATH)/tests/*.sh; do \
 		echo "Running $$(basename $$test_script)..."; \
 		$(DOCKER_EXEC) sh $(CONTAINER_SRC_PATH)/tests/$$(basename $$test_script) || echo "Test $$(basename $$test_script) failed"; \
 	done
-	@$(MAKE) --no-print-directory log
-	@$(DOCKER_CLEAN)
+	@$(MAKE) clean
 	@echo "All tests completed."
 
 # Run validation tests (build and run-all-tests)
