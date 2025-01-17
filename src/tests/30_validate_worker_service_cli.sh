@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Define the service name
-SERVICE_NAME="nodejs_example"
+SERVICE_NAME="server"
 
 # Start Worker PM service in the test environment
 echo "Starting Worker PM service ${SERVICE_NAME}..."

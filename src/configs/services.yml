@@ -2,6 +2,6 @@
 kind: workerService
 version: udx.io/worker-v1/service
 services:
-  - name: "nodejs_example"
+  - name: "server"
     autostart: "true"
     command: "node index.js"
