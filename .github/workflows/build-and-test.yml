@@ -26,7 +26,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Run Development Pipeline
-        run: MULTIPLATFORM=true make build
+        run: make dev-pipeline
         working-directory: .
 
       - name: Install Trivy
