@@ -20,10 +20,12 @@ USER root
 # Set the shell with pipefail option
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install Node.js with improved security using official Node.js binary
-RUN curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz -o node.tar.xz && \
+# Install Node.js
+ARG TARGETARCH=amd64
+RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "arm64") && \
+    curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz -o node.tar.xz && \
     tar -xJf node.tar.xz && \
-    mv node-v${NODE_VERSION}-linux-x64 /usr/local/node && \
+    mv node-v${NODE_VERSION}-linux-${ARCH} /usr/local/node && \
     ln -s /usr/local/node/bin/node /usr/local/bin/node && \
     ln -s /usr/local/node/bin/npm /usr/local/bin/npm && \
     ln -s /usr/local/node/bin/npx /usr/local/bin/npx && \
