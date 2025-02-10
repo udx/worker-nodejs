@@ -1,5 +1,5 @@
 # Use the udx-worker as the base image
-FROM usabilitydynamics/udx-worker:0.8.0
+FROM usabilitydynamics/udx-worker:0.12.0
 
 # Add metadata labels
 LABEL maintainer="UDX"
