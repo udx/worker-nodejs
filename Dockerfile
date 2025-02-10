@@ -3,13 +3,10 @@ FROM usabilitydynamics/udx-worker:0.12.0
 
 # Add metadata labels
 LABEL maintainer="UDX"
-LABEL version="0.8.0"
+LABEL version="0.9.0"
 
 # Set build arguments for Node.js version, application port, and log directory
-ARG NODE_VERSION=22.x
-ARG NODE_PACKAGE_VERSION=20.18.1+dfsg-1ubuntu1
-ARG NPM_PACKAGE_VERSION=9.2.0~ds1-3
-ARG NPM_VERSION=11.0.0
+ARG NODE_VERSION=22.13.1
 ARG LOG_DIR=/var/log/udx-worker-nodejs
 ARG APP_PORT=8080
 
@@ -23,16 +20,15 @@ USER root
 # Set the shell with pipefail option
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install Node.js with improved security
-RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-    nodejs=${NODE_PACKAGE_VERSION} \
-    npm=${NPM_PACKAGE_VERSION} && \
-    npm install -g npm@${NPM_VERSION} && \
-    npm cache clean --force && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.npm/_cacache
+# Install Node.js with improved security using official Node.js binary
+RUN curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz -o node.tar.xz && \
+    tar -xJf node.tar.xz && \
+    mv node-v${NODE_VERSION}-linux-x64 /usr/local/node && \
+    ln -s /usr/local/node/bin/node /usr/local/bin/node && \
+    ln -s /usr/local/node/bin/npm /usr/local/bin/npm && \
+    ln -s /usr/local/node/bin/npx /usr/local/bin/npx && \
+    rm node.tar.xz && \
+    rm -rf /tmp/* /var/tmp/*
 
 # Copy application files
 COPY src/index.js $HOME/index.js
