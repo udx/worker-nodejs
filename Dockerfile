@@ -22,13 +22,20 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Node.js
 ARG TARGETARCH=amd64
-RUN ARCH="$([ "${TARGETARCH}" = "amd64" ] && echo "x64" || echo "arm64")" && \
-    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" -o node.tar.xz && \
+ARG BUILDARCH=amd64
+RUN set -ex && \
+    # Use BUILDARCH for the actual build environment
+    BUILD_ARCH="$([ "${BUILDARCH}" = "amd64" ] && echo "x64" || echo "arm64")" && \
+    # Download and install Node.js for the build architecture
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${BUILD_ARCH}.tar.xz" -o node.tar.xz && \
     tar -xJf node.tar.xz && \
-    mv "node-v${NODE_VERSION}-linux-${ARCH}" /usr/local/node && \
-    ln -s /usr/local/node/bin/node /usr/local/bin/node && \
-    ln -s /usr/local/node/bin/npm /usr/local/bin/npm && \
-    ln -s /usr/local/node/bin/npx /usr/local/bin/npx && \
+    mv "node-v${NODE_VERSION}-linux-${BUILD_ARCH}" /usr/local/node && \
+    ln -sf /usr/local/node/bin/node /usr/local/bin/node && \
+    ln -sf /usr/local/node/bin/npm /usr/local/bin/npm && \
+    ln -sf /usr/local/node/bin/npx /usr/local/bin/npx && \
+    # Verify Node.js architecture
+    node -p "process.arch" && \
+    # Clean up
     rm node.tar.xz && \
     rm -rf /tmp/* /var/tmp/*
 
