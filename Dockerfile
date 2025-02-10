@@ -12,7 +12,7 @@ ARG APP_PORT=8080
 
 # Set environment variables
 ENV HOME="/usr/src/app"
-ENV LOG_DIR=${LOG_DIR} APP_PORT=${APP_PORT}
+ENV LOG_DIR="${LOG_DIR}" APP_PORT="${APP_PORT}"
 
 # Use root user for package installations and file permissions setup
 USER root
@@ -22,10 +22,10 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Node.js
 ARG TARGETARCH=amd64
-RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "arm64") && \
-    curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz -o node.tar.xz && \
+RUN ARCH="$([ "${TARGETARCH}" = "amd64" ] && echo "x64" || echo "arm64")" && \
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" -o node.tar.xz && \
     tar -xJf node.tar.xz && \
-    mv node-v${NODE_VERSION}-linux-${ARCH} /usr/local/node && \
+    mv "node-v${NODE_VERSION}-linux-${ARCH}" /usr/local/node && \
     ln -s /usr/local/node/bin/node /usr/local/bin/node && \
     ln -s /usr/local/node/bin/npm /usr/local/bin/npm && \
     ln -s /usr/local/node/bin/npx /usr/local/bin/npx && \
@@ -33,24 +33,24 @@ RUN ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "arm64") && \
     rm -rf /tmp/* /var/tmp/*
 
 # Copy application files
-COPY src/index.js $HOME/index.js
+COPY src/index.js "${HOME}/index.js"
 COPY src/configs/services.yaml /usr/local/configs/worker/services.yaml
-COPY src/tests/ $HOME/tests/
-COPY LICENSE $HOME/LICENSE
+COPY src/tests/ "${HOME}/tests/"
+COPY LICENSE "${HOME}/LICENSE"
 
 # Ensure the log directory exists, then adjust permissions
 RUN mkdir -p "${LOG_DIR}" \
-    && chown -R "${USER}:${USER}" $HOME $HOME/tests "${LOG_DIR}" \
-    && chmod -R 755 $HOME "${LOG_DIR}"
+    && chown -R "${USER}:${USER}" "${HOME}" "${HOME}/tests" "${LOG_DIR}" \
+    && chmod -R 755 "${HOME}" "${LOG_DIR}"
 
 # Expose the application port
 EXPOSE ${APP_PORT}
 
 # Switch to the non-root user
-USER ${USER}
+USER "${USER}"
 
 # Set the working directory
-WORKDIR $HOME
+WORKDIR "${HOME}"
 
 # Set the default command
 CMD ["tail", "-f", "/dev/null"]
