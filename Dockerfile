@@ -22,7 +22,6 @@ USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Node.js
-ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 RUN set -ex && \
     # Parse platform architecture
