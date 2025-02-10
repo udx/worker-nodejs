@@ -12,7 +12,8 @@ ARG APP_PORT=8080
 
 # Set environment variables
 ENV HOME="/usr/src/app"
-ENV LOG_DIR="${LOG_DIR}" APP_PORT="${APP_PORT}"
+ENV LOG_DIR="${LOG_DIR}" 
+ENV APP_PORT="${APP_PORT}"
 
 # Use root user for package installations and file permissions setup
 USER root
@@ -26,9 +27,9 @@ ARG BUILDPLATFORM
 RUN set -ex && \
     # Parse platform architecture
     case "${BUILDPLATFORM}" in \
-        "linux/amd64") ARCH="x64" ;; \
-        "linux/arm64") ARCH="arm64" ;; \
-        *) echo "Unsupported platform: ${BUILDPLATFORM}" && exit 1 ;; \
+    "linux/amd64") ARCH="x64" ;; \
+    "linux/arm64") ARCH="arm64" ;; \
+    *) echo "Unsupported platform: ${BUILDPLATFORM}" && exit 1 ;; \
     esac && \
     # Download and install Node.js for the build platform
     curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" -o node.tar.xz && \
