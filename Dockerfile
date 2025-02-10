@@ -14,10 +14,8 @@ ARG LOG_DIR=/var/log/udx-worker-nodejs
 ARG APP_PORT=8080
 
 # Set environment variables
+ENV HOME="/usr/src/app"
 ENV LOG_DIR=${LOG_DIR} APP_PORT=${APP_PORT}
-
-# Set the working directory
-WORKDIR /usr/src/app
 
 # Use root user for package installations and file permissions setup
 USER root
@@ -37,21 +35,24 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.npm/_cacache
 
 # Copy application files
-COPY src/index.js /usr/src/app/index.js
+COPY src/index.js $HOME/index.js
 COPY src/configs/services.yaml /usr/local/configs/worker/services.yaml
-COPY src/tests/ /usr/src/app/tests/
-COPY LICENSE /usr/src/app/LICENSE
+COPY src/tests/ $HOME/tests/
+COPY LICENSE $HOME/LICENSE
 
 # Ensure the log directory exists, then adjust permissions
 RUN mkdir -p "${LOG_DIR}" \
-    && chown -R "${USER}:${USER}" /usr/src/app /usr/src/app/tests "${LOG_DIR}" \
-    && chmod -R 755 /usr/src/app "${LOG_DIR}"
+    && chown -R "${USER}:${USER}" $HOME $HOME/tests "${LOG_DIR}" \
+    && chmod -R 755 $HOME "${LOG_DIR}"
 
 # Expose the application port
 EXPOSE ${APP_PORT}
 
-# Switch to the non-root user defined in the base image as ${USER}
+# Switch to the non-root user
 USER ${USER}
+
+# Set the working directory
+WORKDIR $HOME
 
 # Set the default command
 CMD ["tail", "-f", "/dev/null"]
