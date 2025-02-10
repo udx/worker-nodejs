@@ -40,7 +40,7 @@ build:
 run: clean
 	@echo "Running Docker container..."
 	@$(DOCKER_RUN) $(DOCKER_IMAGE)
-	@$(MAKE) --no-print-directory wait-container-ready
+	@$(MAKE) wait-container-ready
 	@echo "Container started successfully."
 
 # Run Docker container in interactive mode
@@ -67,13 +67,9 @@ wait-container-ready:
 	@echo "Waiting for the container to be ready..."
 	@counter=0; \
 	while ! curl -s -o /dev/null -w "%{http_code}" http://localhost:$(HOST_PORT) | grep -q "200"; do \
-		if [ $$counter -ge 5 ]; then \
-			echo "Application may not be ready, checking logs..."; \
-			docker logs $(CONTAINER_NAME); \
-			if [ $$counter -ge 30 ]; then \
-				echo "Timeout: Application did not start"; \
-				exit 1; \
-			fi; \
+		if [ $$counter -ge 30 ]; then \
+			echo "Timeout: Application did not start"; \
+			exit 1; \
 		fi; \
 		echo "Waiting for application to be ready..."; \
 		sleep 1; \
