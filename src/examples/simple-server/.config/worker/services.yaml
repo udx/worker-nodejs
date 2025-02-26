@@ -1,0 +1,9 @@
+---
+kind: workerService
+version: udx.io/worker-v1/service
+
+services:
+  - name: "simple-server"
+    command: "node /usr/src/app/index.js"
+    autostart: true
+    autorestart: true

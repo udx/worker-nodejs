@@ -6,12 +6,11 @@ include Makefile.help
 .DEFAULT_GOAL := help
 
 # Phony targets ensure Make doesn't get confused by filenames
-.PHONY: build run deploy run-it clean exec log test dev-pipeline run-test run-all-tests wait-container-ready
+.PHONY: build run deploy run-it clean exec log test dev-pipeline run-all-tests wait-container-ready
 
 # Docker Commands for Reusability
 DOCKER_RUN_BASE := docker run --rm --name $(CONTAINER_NAME) \
     -e NODE_ENV=$(NODE_ENV) \
-    -e LOG_DIR=$(LOG_DIR) \
     -p $(HOST_PORT):$(CONTAINER_PORT)
 
 # Determine if we should run in detached mode or interactively
@@ -77,30 +76,19 @@ wait-container-ready:
 	done
 	@echo "Container is ready."
 
-# Run a specific test script (specified by TEST_SCRIPT)
-run-test: clean run
-	@echo "Running test script $(TEST_SCRIPT) in test environment..."
-	@NODE_ENV=test
-	@$(MAKE) --no-print-directory wait-container-ready
-	@if [ -z "$(TEST_SCRIPT)" ]; then \
-		echo "Error: TEST_SCRIPT variable is not set. Specify a script to run, e.g., make run-test TEST_SCRIPT=example.sh"; \
-		exit 1; \
-	fi
-	@$(DOCKER_EXEC) sh $(CONTAINER_SRC_PATH)/tests/$(TEST_SCRIPT) || echo "Test $(TEST_SCRIPT) failed"
-	@$(DOCKER_CLEAN)
-
-# Run all tests in the tests directory with test environment
-run-all-tests: clean run
-	@echo "Starting Docker container for test execution in test environment..."
-	@NODE_ENV=test
-	@$(MAKE) --no-print-directory wait-container-ready
-	@echo "Executing all test scripts..."
-	@for test_script in $(SRC_PATH)/tests/*.sh; do \
-		echo "Running $$(basename $$test_script)..."; \
-		$(DOCKER_EXEC) sh $(CONTAINER_SRC_PATH)/tests/$$(basename $$test_script) || echo "Test $$(basename $$test_script) failed"; \
-	done
-	@$(MAKE) clean
-	@echo "All tests completed."
+# Run all tests in the tests directory
+run-all-tests:
+	@echo "Running all tests in Docker container..."
+	@docker run --rm \
+		-v $(PWD)/src/tests:/usr/src/app/tests \
+		-v $(PWD)/src/examples/simple-server/index.js:/usr/src/app/index.js \
+		-v $(PWD)/src/examples/simple-server/.config/worker/services.yaml:/home/udx/.config/worker/services.yaml \
+		-e NODE_ENV=test \
+		$(DOCKER_IMAGE) \
+		/bin/sh -c 'cd /usr/src/app/tests && for test_script in *.sh; do \
+			echo "Running $$test_script..."; \
+			sh ./$$test_script || { echo "Test $$test_script failed"; exit 1; }; \
+		done'
 
 # Run validation tests (build and run-all-tests)
 test: build run-all-tests
