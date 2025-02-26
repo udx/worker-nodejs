@@ -11,8 +11,6 @@ NODE_ENV ?= development
 # Paths Configuration
 SRC_PATH ?= src
 CONTAINER_SRC_PATH ?= /usr/src/app
-HOST_LOG_DIR ?= ./logs
-LOG_DIR ?= /var/log/udx-worker-nodejs
 
 # Networking Configuration
 HOST_PORT ?= 8080

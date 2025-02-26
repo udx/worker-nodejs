@@ -1,65 +1,68 @@
-# Use the udx-worker as the base image
-FROM usabilitydynamics/udx-worker:0.12.0
+# Use the latest udx-worker as the base image
+FROM usabilitydynamics/udx-worker:0.16.0
 
 # Add metadata labels
-LABEL maintainer="UDX"
-LABEL version="0.9.0"
+LABEL version="0.11.0"
 
-# Set build arguments for Node.js version, application port, and log directory
-ARG NODE_VERSION=22.13.1
-ARG LOG_DIR=/var/log/udx-worker-nodejs
+# Set build arguments for Node.js version and application port
+ARG NODE_VERSION=22.14.0
 ARG APP_PORT=8080
 
-# Set environment variables
-ENV HOME="/usr/src/app"
-ENV LOG_DIR="${LOG_DIR}" 
-ENV APP_PORT="${APP_PORT}"
+# Set application-specific environment variables
+ENV APP_HOME="/usr/src/app" \
+    APP_PORT="${APP_PORT}"
 
-# Use root user for package installations and file permissions setup
+# Use root user for Node.js installation
 USER root
 
-# Set the shell with pipefail option
+# Set shell with pipefail option for safer pipe operations
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# Set working directory for Node.js installation
+WORKDIR /tmp
+
 # Install Node.js
-ARG BUILDPLATFORM
 RUN set -ex && \
-    # Parse platform architecture
-    case "${BUILDPLATFORM}" in \
-    "linux/amd64") ARCH="x64" ;; \
-    "linux/arm64") ARCH="arm64" ;; \
-    *) echo "Unsupported platform: ${BUILDPLATFORM}" && exit 1 ;; \
-    esac && \
-    # Download and install Node.js for the build platform
-    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" -o node.tar.xz && \
-    tar -xJf node.tar.xz && \
-    mv "node-v${NODE_VERSION}-linux-${ARCH}" /usr/local/node && \
+    # Detect architecture
+    ARCH=$(dpkg --print-architecture 2>/dev/null || echo "x64") && \
+    if [ "$ARCH" = "amd64" ]; then ARCH="x64"; fi && \
+    if [ "$ARCH" = "arm64" ]; then ARCH="arm64"; fi && \
+    # Download Node.js binary and checksum
+    curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" && \
+    curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" && \
+    # Verify checksum
+    grep " node-v${NODE_VERSION}-linux-${ARCH}.tar.xz\$" SHASUMS256.txt | sha256sum -c - && \
+    # Extract and install
+    mkdir -p /usr/local/node && \
+    tar -xJf "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" --strip-components=1 -C /usr/local/node && \
+    # Create symlinks
     ln -sf /usr/local/node/bin/node /usr/local/bin/node && \
     ln -sf /usr/local/node/bin/npm /usr/local/bin/npm && \
     ln -sf /usr/local/node/bin/npx /usr/local/bin/npx && \
-    # Clean up
-    rm node.tar.xz && \
-    rm -rf /tmp/* /var/tmp/*
+    # Verify installation
+    node --version && \
+    npm --version && \
+    # Cleanup
+    rm -rf /tmp/*
 
 # Copy application files
-COPY src/index.js "${HOME}/index.js"
-COPY src/configs/services.yaml /usr/local/configs/worker/services.yaml
-COPY src/tests/ "${HOME}/tests/"
-COPY LICENSE "${HOME}/LICENSE"
+# Create application directory
+RUN mkdir -p "${APP_HOME}" && \
+    chown -R "${USER}:${USER}" "${APP_HOME}" && \
+    chmod -R 755 "${APP_HOME}"
 
-# Ensure the log directory exists, then adjust permissions
-RUN mkdir -p "${LOG_DIR}" \
-    && chown -R "${USER}:${USER}" "${HOME}" "${HOME}/tests" "${LOG_DIR}" \
-    && chmod -R 755 "${HOME}" "${LOG_DIR}"
+# Copy license and examples
+COPY --chown=${USER}:${USER} LICENSE "${APP_HOME}/LICENSE"
 
 # Expose the application port
 EXPOSE ${APP_PORT}
 
-# Switch to the non-root user
+# Switch to the non-root user and set working directory
 USER "${USER}"
+WORKDIR "${APP_HOME}"
 
-# Set the working directory
-WORKDIR "${HOME}"
+# Use the parent image's entrypoint
+ENTRYPOINT ["/usr/local/worker/bin/entrypoint.sh"]
 
-# Set the default command
+# Use the default command from parent image
 CMD ["tail", "-f", "/dev/null"]
