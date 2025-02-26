@@ -15,6 +15,12 @@ ENV APP_HOME="/usr/src/app" \
 # Use root user for Node.js installation
 USER root
 
+# Set shell with pipefail option for safer pipe operations
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Set working directory for Node.js installation
+WORKDIR /tmp
+
 # Install Node.js
 RUN set -ex && \
     # Detect architecture
@@ -22,7 +28,6 @@ RUN set -ex && \
     if [ "$ARCH" = "amd64" ]; then ARCH="x64"; fi && \
     if [ "$ARCH" = "arm64" ]; then ARCH="arm64"; fi && \
     # Download Node.js binary and checksum
-    cd /tmp && \
     curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" && \
     curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" && \
     # Verify checksum

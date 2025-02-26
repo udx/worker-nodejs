@@ -32,7 +32,7 @@ for i in $(seq 1 10); do
         exit 0
     fi
     
-    if [ $i -eq 10 ]; then
+    if [ "$i" -eq 10 ]; then
         echo "Service failed to start after 10 attempts. Last status:"
         cat /tmp/service_status
         worker service stop $SERVICE_NAME
