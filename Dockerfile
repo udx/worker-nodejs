@@ -1,8 +1,8 @@
 # Use the latest udx-worker as the base image
-FROM usabilitydynamics/udx-worker:0.18.0
+FROM usabilitydynamics/udx-worker:0.20.0
 
 # Add metadata labels
-LABEL version="0.12.0"
+LABEL version="0.13.0"
 
 # Set build arguments for Node.js version and application port
 ARG NODE_VERSION=22.14.0
@@ -20,6 +20,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Set working directory for Node.js installation
 WORKDIR /tmp
+
+# Install required packages for Node.js extraction
+RUN set -ex && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends xz-utils=5.6.4-1ubuntu1 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Node.js
 RUN set -ex && \
@@ -44,6 +50,10 @@ RUN set -ex && \
     npm --version && \
     # Cleanup
     rm -rf /tmp/*
+
+# Remove xz-utils as it's no longer needed
+RUN apt-get purge -y --auto-remove xz-utils && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy application files
 # Create application directory
