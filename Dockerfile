@@ -1,5 +1,5 @@
 # Use the latest udx-worker as the base image
-FROM usabilitydynamics/udx-worker:0.20.0
+FROM usabilitydynamics/udx-worker:0.22.0
 
 # Add metadata labels
 LABEL version="0.13.0"
