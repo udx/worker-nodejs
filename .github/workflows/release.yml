@@ -111,7 +111,7 @@ jobs:
           fi
 
       - name: Upload SBOM Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom
           path: sbom.json
@@ -137,7 +137,7 @@ jobs:
           git config --global user.name "UDX Worker NodeJS"
 
       - name: Download SBOM Artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: sbom
 
