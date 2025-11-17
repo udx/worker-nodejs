@@ -1,5 +1,5 @@
 ---
-name: "CodeQL and Linter Analysis"
+name: "CodeQL and Linter"
 
 on:
   push:
