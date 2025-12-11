@@ -39,7 +39,7 @@ RUN set -ex && \
     curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" && \
     curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" && \
     # Verify checksum
-    grep "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz\$" SHASUMS256.txt > SHASUMS256.txt.verify && \
+    grep "  node-v${NODE_VERSION}-linux-${ARCH}.tar.xz\$" SHASUMS256.txt > SHASUMS256.txt.verify && \
     sha256sum -c SHASUMS256.txt.verify && \
     # Extract and install
     mkdir -p /usr/local/node && \
