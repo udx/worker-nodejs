@@ -24,7 +24,7 @@ WORKDIR /tmp
 # Install required packages for Node.js extraction
 RUN set -ex && \
     apt-get update && \
-    apt-get install -y --no-install-recommends xz-utils=5.6.4-1ubuntu1 && \
+    apt-get install -y --no-install-recommends xz-utils=5.8.1-1build2 && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js
