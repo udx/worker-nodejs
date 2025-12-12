@@ -28,16 +28,19 @@ RUN set -ex && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js
+ARG TARGETARCH
 RUN set -ex && \
     # Detect architecture
-    ARCH=$(dpkg --print-architecture 2>/dev/null || echo "x64") && \
+    ARCH="${TARGETARCH:-$(dpkg --print-architecture 2>/dev/null || echo "x64")}" && \
     if [ "$ARCH" = "amd64" ]; then ARCH="x64"; fi && \
     if [ "$ARCH" = "arm64" ]; then ARCH="arm64"; fi && \
+    echo "Detected architecture: $ARCH" && \
     # Download Node.js binary and checksum
     curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" && \
     curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" && \
     # Verify checksum
-    grep " node-v${NODE_VERSION}-linux-${ARCH}.tar.xz\$" SHASUMS256.txt | sha256sum -c - && \
+    grep "  node-v${NODE_VERSION}-linux-${ARCH}.tar.xz\$" SHASUMS256.txt > SHASUMS256.txt.verify && \
+    sha256sum -c SHASUMS256.txt.verify && \
     # Extract and install
     mkdir -p /usr/local/node && \
     tar -xJf "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" --strip-components=1 -C /usr/local/node && \
