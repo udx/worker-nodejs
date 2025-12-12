@@ -28,82 +28,27 @@ RUN set -ex && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js
-ARG TARGETARCH
-
-# Step 1: Detect and set architecture
 RUN set -ex && \
-    if [ -n "$TARGETARCH" ]; then \
-        ARCH="$TARGETARCH"; \
-    else \
-        ARCH=$(dpkg --print-architecture 2>/dev/null || echo "amd64"); \
-    fi && \
-    case "$ARCH" in \
-        amd64) ARCH="x64" ;; \
-        arm64) ARCH="arm64" ;; \
-        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
-    esac && \
-    echo "Building for architecture: $ARCH" && \
-    echo "$ARCH" > /tmp/node_arch.txt
-
-# Step 2: Download Node.js binary
-RUN set -ex && \
-    ARCH=$(cat /tmp/node_arch.txt) && \
-    echo "Downloading Node.js v${NODE_VERSION} for ${ARCH}..." && \
+    # Detect architecture
+    ARCH=$(dpkg --print-architecture 2>/dev/null || echo "x64") && \
+    if [ "$ARCH" = "amd64" ]; then ARCH="x64"; fi && \
+    if [ "$ARCH" = "arm64" ]; then ARCH="arm64"; fi && \
+    # Download Node.js binary and checksum
     curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" && \
-    ls -lh "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz"
-
-# Step 3: Download checksum file
-RUN set -ex && \
-    echo "Downloading SHASUMS256.txt..." && \
     curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" && \
-    echo "Contents of SHASUMS256.txt:" && \
-    head -n 5 SHASUMS256.txt
-
-# Step 4: Verify checksum
-RUN set -ex && \
-    ARCH=$(cat /tmp/node_arch.txt) && \
-    echo "Verifying checksum for node-v${NODE_VERSION}-linux-${ARCH}.tar.xz..." && \
-    grep "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" SHASUMS256.txt | head -n1 > checksum.txt && \
-    echo "Checksum line:" && \
-    cat checksum.txt && \
-    sha256sum -c checksum.txt
-
-# Step 5: Extract and install Node.js
-RUN set -ex && \
-    ARCH=$(cat /tmp/node_arch.txt) && \
-    echo "Extracting Node.js..." && \
+    # Verify checksum
+    grep " node-v${NODE_VERSION}-linux-${ARCH}.tar.xz\$" SHASUMS256.txt | sha256sum -c - && \
+    # Extract and install
     mkdir -p /usr/local/node && \
     tar -xJf "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" --strip-components=1 -C /usr/local/node && \
-    ls -la /usr/local/node/bin/
-
-# Step 6: Create symlinks and set permissions
-RUN set -ex && \
-    echo "Creating symlinks..." && \
-    chmod +x /usr/local/node/bin/node /usr/local/node/bin/npm /usr/local/node/bin/npx && \
+    # Create symlinks
     ln -sf /usr/local/node/bin/node /usr/local/bin/node && \
     ln -sf /usr/local/node/bin/npm /usr/local/bin/npm && \
     ln -sf /usr/local/node/bin/npx /usr/local/bin/npx && \
-    ls -la /usr/local/bin/node /usr/local/bin/npm /usr/local/bin/npx
-
-# Step 7a: Check binary info
-RUN set -ex && \
-    echo "Checking Node.js binary info..." && \
-    file /usr/local/node/bin/node && \
-    ldd /usr/local/node/bin/node || echo "ldd not available or static binary"
-
-# Step 7b: Test node binary
-RUN set -ex && \
-    echo "Testing node binary..." && \
-    /usr/local/node/bin/node --version
-
-# Step 7c: Test npm binary
-RUN set -ex && \
-    echo "Testing npm binary..." && \
-    /usr/local/node/bin/npm --version
-
-# Step 7d: Cleanup temporary files
-RUN set -ex && \
-    echo "Cleaning up temporary files..." && \
+    # Verify installation
+    node --version && \
+    node /usr/local/node/lib/node_modules/npm/bin/npm-cli.js --version && \
+    # Cleanup
     rm -rf /tmp/*
 
 # Remove xz-utils as it's no longer needed
