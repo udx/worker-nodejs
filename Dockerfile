@@ -76,20 +76,34 @@ RUN set -ex && \
     tar -xJf "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" --strip-components=1 -C /usr/local/node && \
     ls -la /usr/local/node/bin/
 
-# Step 6: Create symlinks
+# Step 6: Create symlinks and set permissions
 RUN set -ex && \
     echo "Creating symlinks..." && \
+    chmod +x /usr/local/node/bin/node /usr/local/node/bin/npm /usr/local/node/bin/npx && \
     ln -sf /usr/local/node/bin/node /usr/local/bin/node && \
     ln -sf /usr/local/node/bin/npm /usr/local/bin/npm && \
     ln -sf /usr/local/node/bin/npx /usr/local/bin/npx && \
     ls -la /usr/local/bin/node /usr/local/bin/npm /usr/local/bin/npx
 
-# Step 7: Verify installation and cleanup
+# Step 7a: Check binary info
 RUN set -ex && \
-    echo "Verifying Node.js installation..." && \
-    node --version && \
-    npm --version && \
-    echo "Cleaning up..." && \
+    echo "Checking Node.js binary info..." && \
+    file /usr/local/node/bin/node && \
+    ldd /usr/local/node/bin/node || echo "ldd not available or static binary"
+
+# Step 7b: Test node binary
+RUN set -ex && \
+    echo "Testing node binary..." && \
+    /usr/local/node/bin/node --version
+
+# Step 7c: Test npm binary
+RUN set -ex && \
+    echo "Testing npm binary..." && \
+    /usr/local/node/bin/npm --version
+
+# Step 7d: Cleanup temporary files
+RUN set -ex && \
+    echo "Cleaning up temporary files..." && \
     rm -rf /tmp/*
 
 # Remove xz-utils as it's no longer needed
