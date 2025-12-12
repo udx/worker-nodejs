@@ -50,7 +50,7 @@ RUN set -ex && \
     ARCH=$(cat /tmp/node_arch.txt) && \
     echo "Downloading Node.js v${NODE_VERSION} for ${ARCH}..." && \
     curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" && \
-    ls -lh node-v${NODE_VERSION}-linux-${ARCH}.tar.xz
+    ls -lh "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz"
 
 # Step 3: Download checksum file
 RUN set -ex && \
@@ -63,7 +63,7 @@ RUN set -ex && \
 RUN set -ex && \
     ARCH=$(cat /tmp/node_arch.txt) && \
     echo "Verifying checksum for node-v${NODE_VERSION}-linux-${ARCH}.tar.xz..." && \
-    cat SHASUMS256.txt | grep "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" | head -n1 > checksum.txt && \
+    grep "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" SHASUMS256.txt | head -n1 > checksum.txt && \
     echo "Checksum line:" && \
     cat checksum.txt && \
     sha256sum -c checksum.txt
@@ -82,7 +82,7 @@ RUN set -ex && \
     ln -sf /usr/local/node/bin/node /usr/local/bin/node && \
     ln -sf /usr/local/node/bin/npm /usr/local/bin/npm && \
     ln -sf /usr/local/node/bin/npx /usr/local/bin/npx && \
-    ls -la /usr/local/bin/ | grep -E "node|npm|npx"
+    ls -la /usr/local/bin/node /usr/local/bin/npm /usr/local/bin/npx
 
 # Step 7: Verify installation and cleanup
 RUN set -ex && \
