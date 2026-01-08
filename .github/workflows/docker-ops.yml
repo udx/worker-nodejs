@@ -4,7 +4,7 @@ name: Docker Operations
 "on":
   push:
     paths:
-      - '.github/workflows/release.yml'
+      - '.github/workflows/docker-ops.yml'
       - 'Dockerfile'
       - 'ci/**'
       - 'src/**'
