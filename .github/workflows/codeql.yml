@@ -4,6 +4,9 @@ name: "CodeQL and Linter"
 on:
   push:
 
+permissions:
+  contents: read
+
 jobs:
   analyze-shell:
     name: Analyze Shell Scripts

@@ -1,8 +1,8 @@
 # Use the latest udx-worker as the base image
-FROM usabilitydynamics/udx-worker:0.35.0
+FROM usabilitydynamics/udx-worker:0.36.0
 
 # Add metadata labels
-LABEL version="0.23.0"
+LABEL version="0.24.0"
 
 # Set build arguments for Node.js version and application port
 ARG NODE_VERSION=22.21.1
