@@ -6,7 +6,7 @@ include Makefile.help
 .DEFAULT_GOAL := help
 
 # Phony targets ensure Make doesn't get confused by filenames
-.PHONY: build run deploy run-it clean exec log test dev-pipeline run-all-tests wait-container-ready
+.PHONY: build run deploy run-it clean exec log test dev-pipeline run-all-tests run-test wait-container-ready
 
 # Docker Commands for Reusability
 DOCKER_RUN_BASE := docker run --rm --name $(CONTAINER_NAME) \
@@ -41,6 +41,11 @@ run: clean
 	@$(DOCKER_RUN) $(DOCKER_IMAGE)
 	@$(MAKE) wait-container-ready
 	@echo "Container started successfully."
+
+# Deploy Docker container (production mode)
+deploy: clean
+	@echo "Deploying Docker container (production mode)..."
+	@$(MAKE) run NODE_ENV=production
 
 # Run Docker container in interactive mode
 run-it:
@@ -89,6 +94,21 @@ run-all-tests:
 			echo "Running $$test_script..."; \
 			sh ./$$test_script || { echo "Test $$test_script failed"; exit 1; }; \
 		done'
+
+# Run a specific test script
+run-test:
+	@if [ -z "$(TEST_SCRIPT)" ]; then \
+		echo "TEST_SCRIPT is required (e.g., make run-test TEST_SCRIPT=10_validate_environment.sh)"; \
+		exit 1; \
+	fi
+	@echo "Running test $(TEST_SCRIPT) in Docker container..."
+	@docker run --rm \
+		-v $(PWD)/src/tests:/usr/src/app/tests \
+		-v $(PWD)/src/examples/simple-server/index.js:/usr/src/app/index.js \
+		-v $(PWD)/src/examples/simple-server/.config/worker/services.yaml:/home/udx/.config/worker/services.yaml \
+		-e NODE_ENV=test \
+		$(DOCKER_IMAGE) \
+		/bin/sh -c 'cd /usr/src/app/tests && sh ./$(TEST_SCRIPT)'
 
 # Run validation tests (build and run-all-tests)
 test: build run-all-tests

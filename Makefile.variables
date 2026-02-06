@@ -24,3 +24,4 @@ NO_CACHE ?= false
 # Runtime Options
 DETACHED ?= true
 CMD ?= /bin/bash
+TEST_SCRIPT ?=
