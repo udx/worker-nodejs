@@ -4,90 +4,62 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/usabilitydynamics/udx-worker-nodejs.svg)](https://hub.docker.com/r/usabilitydynamics/udx-worker-nodejs) [![License](https://img.shields.io/github/license/udx/worker-nodejs.svg)](LICENSE)
 
-**Node.js runtime image built on UDX Worker with supervisor-based process management.**
+**Node.js runtime image built on UDX Worker.**
 
-[Quick Start](#-quick-start) • [Usage](#-usage) • [Development](#-development) • [Resources](#-resources)
+[Quick Start](#quick-start) • [Usage](#usage) • [Development](#development) • [Resources](#resources)
 
-## 🚀 Overview
+## Overview
 
-UDX Worker Node.js provides:
+UDX Worker Node.js is a Docker image that provides a ready-to-use Node.js runtime with the same operational model as `udx/worker` (https://github.com/udx/worker). This repository contains the image source; most users run the published image via `@udx/worker-deployment`.
 
-- 🔧 **Node.js Runtime**: Ready-to-use environment for JavaScript apps
-- 📦 **Process Management**: Supervisor-based service lifecycle
-- 🛠️ **Service Configuration**: `services.yaml` for runtime services
-- 🏗️ **Base Image**: Built on `udx-worker` for consistent ops
+## Quick Start
 
-## 🏃 Quick Start
+Requirements: Docker and Node.js (for the CLI).
 
-### Example: Simple Service
-
-Use the included example in `src/examples/simple-server`:
-
-```bash
-docker pull usabilitydynamics/udx-worker-nodejs:latest
-docker run -d --name my-node-app \
-  -v $(pwd)/src/examples/simple-server:/usr/src/app \
-  -v $(pwd)/src/examples/simple-server/.config:/home/udx/.config \
-  -p 8080:8080 \
-  usabilitydynamics/udx-worker-nodejs:latest
-```
-
-### Example: Custom Application
-
-1. Create `.config/worker/services.yaml`:
-
-```yaml
-kind: workerService
-version: udx.io/worker-v1/service
-services:
-  - name: "api-server"
-    command: "node api/server.js"
-    autostart: true
-    autorestart: true
-    envs:
-      - "PORT=3000"
-      - "NODE_ENV=production"
-```
-
-2. Run with Docker Compose:
-
-```yaml
-version: '3'
-services:
-  app:
-    image: usabilitydynamics/udx-worker-nodejs:latest
-    volumes:
-      - ./:/usr/src/app
-      - ./.config:/home/udx/.config
-    ports:
-      - "3000:3000"
-```
-
-## ⚙️ Usage
-
-### worker-deployment CLI
-
-Use `@udx/worker-deployment` to standardize runs with `deploy.yml`:
+1. Install the deployment CLI (`@udx/worker-deployment`).
 
 ```bash
 npm install -g @udx/worker-deployment
+```
+
+2. Generate a config and edit `deploy.yml` for your app.
+
+```bash
 worker config
+```
+
+3. Run the container.
+
+```bash
 worker run
 ```
 
-This repo includes:
-- `deploy.yml` (root template)
-- `src/examples/simple-server/deploy.yml` (example)
+Notes:
+- `worker config` generates a `deploy.yml` in your current directory.
+- Edit `deploy.yml` with your settings before running.
+- Deploy config format and CLI reference: https://github.com/udx/worker/tree/main/docs/deploy/README.md
+- `@udx/worker-deployment` on GitHub: https://github.com/udx/worker-deployment
+- `@udx/worker-deployment` on npm: https://www.npmjs.com/package/@udx/worker-deployment
 
-### Configuration
+## Usage
 
-Runtime and build variables live in `Makefile.variables`:
+### Deployment Configuration
 
-- Node.js version (default `22.x LTS`)
-- Port mappings
-- Source paths
+- `deploy.yml` is the primary entrypoint for running this image.
+- Schema and CLI behavior: https://github.com/udx/worker/tree/main/docs/deploy/README.md
 
-## 🛠️ Development
+### Runtime Services
+
+- Define services in `.config/worker/services.yaml`.
+- Service configuration: https://github.com/udx/worker/tree/main/docs/runtime/services.md
+
+### Runtime Config and Secrets
+
+- Define runtime config in `.config/worker/worker.yaml`.
+- Runtime config and auth providers: https://github.com/udx/worker/tree/main/docs/runtime/config.md
+- Authorization details: https://github.com/udx/worker/tree/main/docs/authorization.md
+
+## Development
 
 ```bash
 git clone https://github.com/udx/worker-nodejs.git
@@ -103,13 +75,16 @@ To run a single test:
 make run-test TEST_SCRIPT=10_validate_environment.sh
 ```
 
-## 📚 Resources
+Build defaults for contributors live in `Makefile.variables` (Node.js version, ports, build args).
 
-- Base image docs: `udx/worker` — https://github.com/udx/worker
+## Resources
+
+- Base image docs: https://github.com/udx/worker
+- Deployment CLI: https://github.com/udx/worker-deployment
 - Docker Hub: https://hub.docker.com/r/usabilitydynamics/udx-worker-nodejs
 - Product page: https://udx.io/products/udx-worker-nodejs
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -120,6 +95,7 @@ make run-test TEST_SCRIPT=10_validate_environment.sh
 Please ensure your PR includes appropriate tests and documentation updates.
 
 ---
+
 <div align="center">
 Built by <a href="https://udx.io">UDX</a> © 2025
 </div>
