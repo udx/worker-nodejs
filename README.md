@@ -4,32 +4,24 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/usabilitydynamics/udx-worker-nodejs.svg)](https://hub.docker.com/r/usabilitydynamics/udx-worker-nodejs) [![License](https://img.shields.io/github/license/udx/worker-nodejs.svg)](LICENSE)
 
-**A versatile Docker image for running Node.js applications with built-in process management, providing a ready-to-use environment to deploy and manage your JavaScript projects.**
+**Node.js runtime image built on UDX Worker with supervisor-based process management.**
 
-[Quick Start](#-quick-start) • [Development](#-development) • [Documentation](#-documentation) • [Contributing](#-contributing)
+[Quick Start](#-quick-start) • [Usage](#-usage) • [Development](#-development) • [Resources](#-resources)
 
 ## 🚀 Overview
 
-UDX Worker Node.js is a specialized Docker image built on UDX Worker that provides:
+UDX Worker Node.js provides:
 
-- 🔧 **Node.js Runtime**: Ready-to-use environment for JavaScript applications
-- 📦 **Process Management**: Built-in supervisor-based service management
-- 🛠️ **Service Configuration**: YAML-based service definition and control
-- 🔄 **Zero Downtime**: Seamless application updates and restarts
-- 🏗️ **Base Image**: Built on `udx-worker` for secure, efficient operations
+- 🔧 **Node.js Runtime**: Ready-to-use environment for JavaScript apps
+- 📦 **Process Management**: Supervisor-based service lifecycle
+- 🛠️ **Service Configuration**: `services.yaml` for runtime services
+- 🏗️ **Base Image**: Built on `udx-worker` for consistent ops
 
-## 👨‍💻 Development
+## 🏃 Quick Start
 
-### 📋 Prerequisites
+### Example: Simple Service
 
-- `Docker` installed and running on your system
-- Node.js application code (optional)
-
-## 🚀 Quick Start
-
-### Example 1: Simple Service
-
-1. Use the included example in `src/examples/simple-server`:
+Use the included example in `src/examples/simple-server`:
 
 ```bash
 docker pull usabilitydynamics/udx-worker-nodejs:latest
@@ -40,9 +32,9 @@ docker run -d --name my-node-app \
   usabilitydynamics/udx-worker-nodejs:latest
 ```
 
-### Example 2: Custom Application
+### Example: Custom Application
 
-1. Create your service configuration in `.config/worker/services.yaml`:
+1. Create `.config/worker/services.yaml`:
 
 ```yaml
 kind: workerService
@@ -55,14 +47,9 @@ services:
     envs:
       - "PORT=3000"
       - "NODE_ENV=production"
-  - name: "worker-queue"
-    command: "node worker.js"
-    autostart: true
-    envs:
-      - "QUEUE_URL=redis://localhost:6379"
 ```
 
-2. Create a `docker-compose.yml`:
+2. Run with Docker Compose:
 
 ```yaml
 version: '3'
@@ -76,64 +63,11 @@ services:
       - "3000:3000"
 ```
 
-### Development Setup
+## ⚙️ Usage
 
-1. Clone this repository:
+### worker-deployment CLI
 
-```
-git clone https://github.com/udx/worker-nodejs.git
-cd worker-nodejs
-```
-
-2. Build the Docker image:
-
-```
-make build
-```
-
-3. Run Tests to verify functionality:
-
-```
-make test
-```
-
-You can add additional tests in the `src/tests/` directory as needed.
-To run a single test:
-
-```
-make run-test TEST_SCRIPT=10_validate_environment.sh
-```
-
-## ⚙️ Configuration
-
-You can configure build and runtime variables in `Makefile.variables`:
-
-- Node.js version. _(Node.js 22.x LTS supported by default)_
-- To override, set `NODE_VERSION` as a build arg.
-- Port mappings
-- Source paths
-
-Adjust these variables to suit your environment or specific deployment requirements.
-
-## 🛠️ Makefile Commands Helper
-
-Use make to view all available commands:
-
-```
-make help
-```
-
-These commands offer options for building, running, and testing your application seamlessly.
-
-## 📚 Documentation
-
-### 🔧 Based on udx-worker
-
-Built on [`udx-worker`](https://github.com/udx/worker), this image benefits from secure, resource-efficient configurations and best practices, providing a reliable foundation for Node.js applications.
-
-### 🚚 worker-deployment CLI
-
-Use `@udx/worker-deployment` to standardize runs with a `deploy.yml` file:
+Use `@udx/worker-deployment` to standardize runs with `deploy.yml`:
 
 ```bash
 npm install -g @udx/worker-deployment
@@ -141,30 +75,41 @@ worker config
 worker run
 ```
 
-This repo includes a `deploy.yml` template and an example at `src/examples/simple-server/deploy.yml`.
+This repo includes:
+- `deploy.yml` (root template)
+- `src/examples/simple-server/deploy.yml` (example)
 
-### Core Concepts
+### Configuration
 
-- **Process Management**: Uses supervisor-based worker process manager
-- **Service Configuration**: Defined through `services.yaml`
-- **Configuration**: Customizable through `Makefile.variables`
+Runtime and build variables live in `Makefile.variables`:
 
-### Additional Resources
-
-- Build variables can be configured in `Makefile.variables`
-- View available commands with `make help`
-- Test examples available in `src/tests/`
+- Node.js version (default `22.x LTS`)
+- Port mappings
+- Source paths
 
 ## 🛠️ Development
 
-Contribute to the project:
+```bash
+git clone https://github.com/udx/worker-nodejs.git
+cd worker-nodejs
 
-1. Fork the repository
-2. Create your feature branch
-3. Submit a pull request
+make build
+make test
+```
+
+To run a single test:
+
+```bash
+make run-test TEST_SCRIPT=10_validate_environment.sh
+```
+
+## 📚 Resources
+
+- Base image docs: `udx/worker` — https://github.com/udx/worker
+- Docker Hub: https://hub.docker.com/r/usabilitydynamics/udx-worker-nodejs
+- Product page: https://udx.io/products/udx-worker-nodejs
 
 ## 🤝 Contributing
-We welcome contributions! Here's how you can help:
 
 1. Fork the repository
 2. Create a feature branch
@@ -172,22 +117,7 @@ We welcome contributions! Here's how you can help:
 4. Push to your branch
 5. Open a Pull Request
 
-Please ensure your PR:
-- Follows our coding standards
-- Includes appropriate tests
-- Updates relevant documentation
-
-## 🔗 Resources
-- [Docker Hub](https://hub.docker.com/r/usabilitydynamics/udx-worker-nodejs)
-- [UDX Worker Documentation](https://github.com/udx/worker)
-- [Product Page](https://udx.io/products/udx-worker-nodejs)
-
-## 🎯 Custom Development
-Need specific features or customizations?
-[Contact our team](https://udx.io/) for professional development services.
-
-## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Please ensure your PR includes appropriate tests and documentation updates.
 
 ---
 <div align="center">
