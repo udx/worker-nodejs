@@ -14,7 +14,7 @@ UDX Worker Node.js is a Docker image that provides a ready-to-use Node.js runtim
 
 Requirements: Docker and Node.js (for the CLI).
 
-1. Install the deployment CLI (`@udx/worker-deployment`).
+1. Install the deployment CLI ([@udx/worker-deployment](https://www.npmjs.com/package/@udx/worker-deployment)).
 
 ```bash
 npm install -g @udx/worker-deployment
@@ -32,31 +32,17 @@ worker config
 worker run
 ```
 
-Notes:
-
-- `worker config` generates a `deploy.yml` in your current directory.
-- Edit `deploy.yml` with your settings before running.
-- Deploy config format and CLI reference: https://github.com/udx/worker/tree/main/docs/deploy/README.md
-- `@udx/worker-deployment` on GitHub: https://github.com/udx/worker-deployment
-- `@udx/worker-deployment` on npm: https://www.npmjs.com/package/@udx/worker-deployment
-
 ## Usage
 
-### Deployment Configuration
+- Deploy configuration: https://github.com/udx/worker-deployment/blob/latest/docs/deploy-config.md
 
-- `deploy.yml` is the primary entrypoint for running this image.
-- Schema and CLI behavior: https://github.com/udx/worker/tree/main/docs/deploy/README.md
+- Service configuration: https://github.com/udx/worker/blob/latest/docs/runtime/services.md
 
-### Runtime Services
+- Runtime config and secrets: https://github.com/udx/worker/blob/latest/docs/runtime/config.md
 
-- Define services in `.config/worker/services.yaml`.
-- Service configuration: https://github.com/udx/worker/tree/main/docs/runtime/services.md
+### Examples
 
-### Runtime Config and Secrets
-
-- Define runtime config in `.config/worker/worker.yaml`.
-- Runtime config and auth providers: https://github.com/udx/worker/tree/main/docs/runtime/config.md
-- Authorization details: https://github.com/udx/worker/tree/main/docs/authorization.md
+- `src/examples/simple-server` is included as a minimal sample.
 
 ## Development
 
@@ -78,10 +64,9 @@ Build defaults for contributors live in `Makefile.variables` (Node.js version, p
 
 ## Resources
 
-- Base image docs: https://github.com/udx/worker
-- Deployment CLI: https://github.com/udx/worker-deployment
+- Base image docs: https://github.com/udx/worker/tree/latest/docs
+- Deployment CLI: https://github.com/udx/worker-deployment/tree/latest/docs
 - Docker Hub: https://hub.docker.com/r/usabilitydynamics/udx-worker-nodejs
-- Product page: https://udx.io/products/udx-worker-nodejs
 
 ## Contributing
 
