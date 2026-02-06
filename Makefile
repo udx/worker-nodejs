@@ -22,6 +22,12 @@ endif
 
 DOCKER_EXEC := docker exec -it $(CONTAINER_NAME)
 DOCKER_CLEAN := docker rm -f $(CONTAINER_NAME) || true
+TEST_VOLUMES := \
+	-v $(PWD)/src/tests:/usr/src/app/tests \
+	-v $(PWD)/src/examples/simple-server/index.js:/usr/src/app/index.js \
+	-v $(PWD)/src/examples/simple-server/.config/worker/services.yaml:/home/udx/.config/worker/services.yaml
+TEST_ENV := -e NODE_ENV=test
+TEST_RUN := docker run --rm $(TEST_VOLUMES) $(TEST_ENV) $(DOCKER_IMAGE)
 
 # Build the Docker image with multi-platform support
 build:
@@ -82,38 +88,28 @@ wait-container-ready:
 	@echo "Container is ready."
 
 # Run all tests in the tests directory
-run-all-tests:
+run-all-tests: build
 	@echo "Running all tests in Docker container..."
-	@docker run --rm \
-		-v $(PWD)/src/tests:/usr/src/app/tests \
-		-v $(PWD)/src/examples/simple-server/index.js:/usr/src/app/index.js \
-		-v $(PWD)/src/examples/simple-server/.config/worker/services.yaml:/home/udx/.config/worker/services.yaml \
-		-e NODE_ENV=test \
-		$(DOCKER_IMAGE) \
+	@$(TEST_RUN) \
 		/bin/sh -c 'cd /usr/src/app/tests && for test_script in *.sh; do \
 			echo "Running $$test_script..."; \
 			sh ./$$test_script || { echo "Test $$test_script failed"; exit 1; }; \
 		done'
 
 # Run a specific test script
-run-test:
+run-test: build
 	@if [ -z "$(TEST_SCRIPT)" ]; then \
 		echo "TEST_SCRIPT is required (e.g., make run-test TEST_SCRIPT=10_validate_environment.sh)"; \
 		exit 1; \
 	fi
 	@echo "Running test $(TEST_SCRIPT) in Docker container..."
-	@docker run --rm \
-		-v $(PWD)/src/tests:/usr/src/app/tests \
-		-v $(PWD)/src/examples/simple-server/index.js:/usr/src/app/index.js \
-		-v $(PWD)/src/examples/simple-server/.config/worker/services.yaml:/home/udx/.config/worker/services.yaml \
-		-e NODE_ENV=test \
-		$(DOCKER_IMAGE) \
+	@$(TEST_RUN) \
 		/bin/sh -c 'cd /usr/src/app/tests && sh ./$(TEST_SCRIPT)'
 
 # Run validation tests (build and run-all-tests)
-test: build run-all-tests
+test: run-all-tests
 	@echo "Validation tests completed."
 
 # Development pipeline (build and test)
-dev-pipeline: build test
+dev-pipeline: test
 	@echo "Development pipeline completed successfully."
