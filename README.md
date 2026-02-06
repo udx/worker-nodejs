@@ -1,7 +1,5 @@
 <img src="assets/logo.svg" alt="UDX Worker Node.js">
 
-# UDX Worker Node.js
-
 [![Docker Pulls](https://img.shields.io/docker/pulls/usabilitydynamics/udx-worker-nodejs.svg)](https://hub.docker.com/r/usabilitydynamics/udx-worker-nodejs) [![License](https://img.shields.io/github/license/udx/worker-nodejs.svg)](LICENSE)
 
 **Node.js runtime image built on UDX Worker.**
@@ -10,7 +8,7 @@
 
 ## Overview
 
-UDX Worker Node.js is a Docker image that provides a ready-to-use Node.js runtime with the same operational model as `udx/worker` (https://github.com/udx/worker). This repository contains the image source; most users run the published image via `@udx/worker-deployment`.
+UDX Worker Node.js is a Docker image that provides a ready-to-use Node.js runtime with the same operational model as `udx/worker` (https://github.com/udx/worker).
 
 ## Quick Start
 
@@ -35,6 +33,7 @@ worker run
 ```
 
 Notes:
+
 - `worker config` generates a `deploy.yml` in your current directory.
 - Edit `deploy.yml` with your settings before running.
 - Deploy config format and CLI reference: https://github.com/udx/worker/tree/main/docs/deploy/README.md
