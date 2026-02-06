@@ -27,25 +27,15 @@ UDX Worker Node.js is a specialized Docker image built on UDX Worker that provid
 
 ### Example 1: Simple Service
 
-1. Create a service configuration in `.config/worker/services.yaml`:
-
-```yaml
-kind: workerService
-version: udx.io/worker-v1/service
-services:
-  - name: "node-app"
-    command: "node index.js"
-    autostart: true
-    autorestart: true
-    envs:
-      - "PORT=3000"
-```
-
-2. Pull and run the image:
+1. Use the included example in `src/examples/simple-server`:
 
 ```bash
 docker pull usabilitydynamics/udx-worker-nodejs:latest
-docker run -d --name my-node-app -p 3000:3000 -v $(pwd)/.config:/home/udx/.config usabilitydynamics/udx-worker-nodejs:latest
+docker run -d --name my-node-app \
+  -v $(pwd)/src/examples/simple-server:/usr/src/app \
+  -v $(pwd)/src/examples/simple-server/.config:/home/udx/.config \
+  -p 8080:8080 \
+  usabilitydynamics/udx-worker-nodejs:latest
 ```
 
 ### Example 2: Custom Application
@@ -102,16 +92,22 @@ make build
 3. Run Tests to verify functionality:
 
 ```
-make run-all-tests
+make test
 ```
 
 You can add additional tests in the `src/tests/` directory as needed.
+To run a single test:
+
+```
+make run-test TEST_SCRIPT=10_validate_environment.sh
+```
 
 ## ⚙️ Configuration
 
 You can configure build and runtime variables in `Makefile.variables`:
 
-- Node.js version. _(Node.js 20.x LTS supported by default)_
+- Node.js version. _(Node.js 22.x LTS supported by default)_
+- To override, set `NODE_VERSION` as a build arg.
 - Port mappings
 - Source paths
 
@@ -132,6 +128,18 @@ These commands offer options for building, running, and testing your application
 ### 🔧 Based on udx-worker
 
 Built on [`udx-worker`](https://github.com/udx/worker), this image benefits from secure, resource-efficient configurations and best practices, providing a reliable foundation for Node.js applications.
+
+### 🚚 worker-deployment CLI
+
+Use `@udx/worker-deployment` to standardize runs with a `deploy.yml` file:
+
+```bash
+npm install -g @udx/worker-deployment
+worker config
+worker run
+```
+
+This repo includes a `deploy.yml` template and an example at `src/examples/simple-server/deploy.yml`.
 
 ### Core Concepts
 
