@@ -1,3 +1,5 @@
+<img src="assets/logo.svg" alt="UDX Worker Node.js">
+
 # UDX Worker Node.js
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/usabilitydynamics/udx-worker-nodejs.svg)](https://hub.docker.com/r/usabilitydynamics/udx-worker-nodejs) [![License](https://img.shields.io/github/license/udx/worker-nodejs.svg)](LICENSE)
@@ -79,8 +81,8 @@ services:
 1. Clone this repository:
 
 ```
-git clone https://github.com/udx/udx-worker-nodejs.git
-cd udx-worker-nodejs
+git clone https://github.com/udx/worker-nodejs.git
+cd worker-nodejs
 ```
 
 2. Build the Docker image:
