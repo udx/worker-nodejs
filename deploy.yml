@@ -1,0 +1,19 @@
+# npm install -g @udx/worker-deployment
+# worker config
+# worker run
+
+---
+kind: workerDeployConfig
+version: udx.io/worker-v1/deploy
+config:
+  image: "usabilitydynamics/udx-worker-nodejs:latest"
+
+  # Volume mounts (optional)
+  # Format: "host_path:container_path" or "host_path:container_path:ro"
+  volumes:
+    - "./src/examples/simple-server:/usr/src/app"
+    - "./src/examples/simple-server/.config/worker:/home/udx/.config/worker:ro"
+
+  # Ports to expose (optional)
+  ports:
+    - "8080:8080"

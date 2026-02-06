@@ -49,6 +49,14 @@ services:
       - "8080:8080"
 ```
 
+3. Using worker-deployment:
+```bash
+npm install -g @udx/worker-deployment
+cd src/examples
+cp simple-server/deploy.yml deploy.yml
+worker run
+```
+
 ## 📁 Directory Structure
 Each example follows this structure:
 ```

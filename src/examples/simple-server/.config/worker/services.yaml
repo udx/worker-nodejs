@@ -1,4 +1,3 @@
----
 kind: workerService
 version: udx.io/worker-v1/service
 
@@ -7,3 +6,5 @@ services:
     command: "node /usr/src/app/index.js"
     autostart: true
     autorestart: true
+    envs:
+      - "APP_PORT=8080"
