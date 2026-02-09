@@ -2,14 +2,14 @@
 FROM usabilitydynamics/udx-worker:0.37.0
 
 # Add metadata labels
-LABEL version="0.28.0"
+LABEL version="0.29.0"
 
 # Set build arguments for Node.js version and application port
 ARG NODE_VERSION=22.21.1
 ARG APP_PORT=8080
 
 # Add Node.js to PATH
-ENV PATH="/usr/local/node/bin:${PATH}"
+ENV PATH="/usr/local/bin:/usr/local/node/bin:${PATH}"
 
 # Set application-specific environment variables
 ENV APP_HOME="/usr/src/app" \
@@ -47,18 +47,19 @@ RUN set -ex && \
     # Rewrite shebangs to avoid /usr/bin/env (BuildKit/QEMU arm64-safe)
     sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/lib/node_modules/npm/bin/npm-cli.js && \
     sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/lib/node_modules/npm/bin/npx-cli.js && \
+    sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/bin/npm && \
+    sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/bin/npx && \
     ln -sf /usr/local/node/bin/node /usr/local/bin/node && \
-    # Provide npm/npx launchers without /usr/bin/env (buildx/QEMU arm64-safe)
+    # Provide npm/npx launchers in /usr/local/bin (preferred via PATH)
     printf '%s\n' '#!/bin/sh' \
       'exec /usr/local/node/bin/node /usr/local/node/lib/node_modules/npm/bin/npm-cli.js "$@"' \
       > /usr/local/bin/npm && chmod +x /usr/local/bin/npm && \
     printf '%s\n' '#!/bin/sh' \
       'exec /usr/local/node/bin/node /usr/local/node/lib/node_modules/npm/bin/npx-cli.js "$@"' \
       > /usr/local/bin/npx && chmod +x /usr/local/bin/npx && \
-    # Verify installation
+    # Verify installation and resolution path
     node --version && \
-    npm --version && \
-    # Cleanup
+    command -v npm && head -n 1 "$(command -v npm)" && npm --version && \
     rm -rf /tmp/*
 
 # Remove xz-utils as it's no longer needed
