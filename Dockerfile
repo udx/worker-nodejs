@@ -2,11 +2,14 @@
 FROM usabilitydynamics/udx-worker:0.37.0
 
 # Add metadata labels
-LABEL version="0.25.0"
+LABEL version="0.26.0"
 
 # Set build arguments for Node.js version and application port
 ARG NODE_VERSION=22.21.1
 ARG APP_PORT=8080
+
+# Add Node.js to PATH
+ENV PATH="/usr/local/node/bin:${PATH}"
 
 # Set application-specific environment variables
 ENV APP_HOME="/usr/src/app" \
