@@ -2,7 +2,7 @@
 FROM usabilitydynamics/udx-worker:0.37.0
 
 # Add metadata labels
-LABEL version="0.26.0"
+LABEL version="0.27.0"
 
 # Set build arguments for Node.js version and application port
 ARG NODE_VERSION=22.21.1
@@ -46,11 +46,16 @@ RUN set -ex && \
     tar -xJf "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" --strip-components=1 -C /usr/local/node && \
     # Create symlinks
     ln -sf /usr/local/node/bin/node /usr/local/bin/node && \
-    ln -sf /usr/local/node/bin/npm /usr/local/bin/npm && \
-    ln -sf /usr/local/node/bin/npx /usr/local/bin/npx && \
+    # Provide npm/npx launchers without /usr/bin/env (buildx/QEMU arm64-safe)
+    printf '%s\n' '#!/bin/sh' \
+    'exec node /usr/local/node/lib/node_modules/npm/bin/npm-cli.js "$@"' \
+    > /usr/local/bin/npm && chmod +x /usr/local/bin/npm && \
+    printf '%s\n' '#!/bin/sh' \
+    'exec node /usr/local/node/lib/node_modules/npm/bin/npx-cli.js "$@"' \
+    > /usr/local/bin/npx && chmod +x /usr/local/bin/npx && \
     # Verify installation
     node --version && \
-    node /usr/local/node/lib/node_modules/npm/bin/npm-cli.js --version && \
+    npm --version && \
     # Cleanup
     rm -rf /tmp/*
 
