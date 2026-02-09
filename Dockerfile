@@ -44,15 +44,17 @@ RUN set -ex && \
     # Extract and install
     mkdir -p /usr/local/node && \
     tar -xJf "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" --strip-components=1 -C /usr/local/node && \
-    # Create symlinks
+    # Rewrite shebangs to avoid /usr/bin/env (BuildKit/QEMU arm64-safe)
+    sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/lib/node_modules/npm/bin/npm-cli.js && \
+    sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/lib/node_modules/npm/bin/npx-cli.js && \
     ln -sf /usr/local/node/bin/node /usr/local/bin/node && \
     # Provide npm/npx launchers without /usr/bin/env (buildx/QEMU arm64-safe)
     printf '%s\n' '#!/bin/sh' \
-    'exec node /usr/local/node/lib/node_modules/npm/bin/npm-cli.js "$@"' \
-    > /usr/local/bin/npm && chmod +x /usr/local/bin/npm && \
+      'exec /usr/local/node/bin/node /usr/local/node/lib/node_modules/npm/bin/npm-cli.js "$@"' \
+      > /usr/local/bin/npm && chmod +x /usr/local/bin/npm && \
     printf '%s\n' '#!/bin/sh' \
-    'exec node /usr/local/node/lib/node_modules/npm/bin/npx-cli.js "$@"' \
-    > /usr/local/bin/npx && chmod +x /usr/local/bin/npx && \
+      'exec /usr/local/node/bin/node /usr/local/node/lib/node_modules/npm/bin/npx-cli.js "$@"' \
+      > /usr/local/bin/npx && chmod +x /usr/local/bin/npx && \
     # Verify installation
     node --version && \
     npm --version && \
