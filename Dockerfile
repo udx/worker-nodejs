@@ -1,11 +1,11 @@
 # Use the latest udx-worker as the base image
-FROM usabilitydynamics/udx-worker:0.37.0
+FROM usabilitydynamics/udx-worker:0.38.0
 
 # Add metadata labels
-LABEL version="0.29.0"
+LABEL version="0.30.0"
 
 # Set build arguments for Node.js version and application port
-ARG NODE_VERSION=22.21.1
+ARG NODE_VERSION=24.13.1
 ARG APP_PORT=8080
 
 # Add Node.js to PATH
@@ -44,19 +44,7 @@ RUN set -ex && \
     # Extract and install
     mkdir -p /usr/local/node && \
     tar -xJf "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" --strip-components=1 -C /usr/local/node && \
-    # Rewrite shebangs to avoid /usr/bin/env (BuildKit/QEMU arm64-safe)
-    sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/lib/node_modules/npm/bin/npm-cli.js && \
-    sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/lib/node_modules/npm/bin/npx-cli.js && \
-    sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/bin/npm && \
-    sed -i '1 s|^#!.*|#!/usr/local/node/bin/node|' /usr/local/node/bin/npx && \
     ln -sf /usr/local/node/bin/node /usr/local/bin/node && \
-    # Provide npm/npx launchers in /usr/local/bin (preferred via PATH)
-    printf '%s\n' '#!/bin/sh' \
-      'exec /usr/local/node/bin/node /usr/local/node/lib/node_modules/npm/bin/npm-cli.js "$@"' \
-      > /usr/local/bin/npm && chmod +x /usr/local/bin/npm && \
-    printf '%s\n' '#!/bin/sh' \
-      'exec /usr/local/node/bin/node /usr/local/node/lib/node_modules/npm/bin/npx-cli.js "$@"' \
-      > /usr/local/bin/npx && chmod +x /usr/local/bin/npx && \
     # Verify installation and resolution path
     node --version && \
     command -v npm && head -n 1 "$(command -v npm)" && npm --version && \
