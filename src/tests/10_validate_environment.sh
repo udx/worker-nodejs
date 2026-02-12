@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Required Node.js version
-REQUIRED_NODE_VERSION="22"
+REQUIRED_NODE_VERSION="24"
 
 # Check if Node.js is installed
 if ! command -v node >/dev/null 2>&1; then
