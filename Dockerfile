@@ -2,7 +2,7 @@
 FROM usabilitydynamics/udx-worker:0.41.0
 
 # Add metadata labels
-LABEL version="0.41.0"
+LABEL version="0.31.0"
 
 # Set build arguments for Node.js version and application port
 ARG NODE_VERSION=24.13.1
