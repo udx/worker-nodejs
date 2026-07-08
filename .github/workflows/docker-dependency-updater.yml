@@ -195,8 +195,13 @@ jobs:
             }
           ' "${DOCKERFILE}" > "${PROBE_DOCKERFILE}"
 
+          current_node_version="$(awk -F= '/^ARG NODE_VERSION=/ { print $2; exit }' "${DOCKERFILE}")"
+          current_node_major="${current_node_version%%.*}"
+          test -n "${current_node_major}"
+
           node_version="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL https://nodejs.org/dist/index.json \
-            | jq -r '[.[] | select(.lts != false)][0].version | ltrimstr("v")')"
+            | jq -r --arg major "${current_node_major}" \
+              '[.[] | select(.lts != false) | .version | ltrimstr("v") | select(startswith($major + "."))][0]')"
           test -n "${node_version}"
 
           base_image="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
@@ -216,6 +221,15 @@ jobs:
 
           apt_packages=(xz-utils)
 
+          {
+            echo
+            echo "# Dependency probe keeps apt packages installed for dpkg-query."
+            echo "RUN set -ex && \\"
+            echo "    apt-get update && \\"
+            echo "    apt-get install -y --no-install-recommends ${apt_packages[*]} && \\"
+            echo "    rm -rf /var/lib/apt/lists/*"
+          } >> "${PROBE_DOCKERFILE}"
+
           docker build --pull --no-cache -f "${PROBE_DOCKERFILE}" \
             -t "${PROBE_IMAGE}" .
           docker run -i --rm --entrypoint bash "${PROBE_IMAGE}" \
@@ -225,7 +239,7 @@ jobs:
           dpkg-query -W -f='${binary:Package}\t${Version}\n' "$@"
           EOF
           strategy_summary="Use the latest udx-worker release, latest Node.js "
-          strategy_summary="${strategy_summary}LTS release, and a no-pin apt "
+          strategy_summary="${strategy_summary}LTS release within the current major, and a no-pin apt "
           strategy_summary="${strategy_summary}probe for xz-utils."
 
           non_apt_path="${probe_dir}/non-apt.json"
@@ -470,8 +484,6 @@ jobs:
               [ "${UPLOAD_COPILOT_SESSION}" = "true" ]; then
               echo "- Copilot session artifact: \`copilot-docker-dependency-session.md\`"
             fi
-            echo "- Build validation: repository Docker/CI workflows"
-            echo
             echo "## Diff"
             echo
             echo '```diff'
@@ -510,7 +522,7 @@ jobs:
       - name: Create pull request
         id: create-pr
         if: steps.changes.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
         timeout-minutes: 5
         with:
           token: ${{ secrets.DEPENDABOT_REVIEWER_TOKEN || secrets.GH_TOKEN || github.token }}
