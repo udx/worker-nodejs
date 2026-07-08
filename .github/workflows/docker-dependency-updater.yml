@@ -168,7 +168,11 @@ jobs:
         id: probe
         timeout-minutes: 8
         env:
+          DOCKERFILE: ${{ needs.config.outputs.dockerfile }}
           GITHUB_TOKEN: ${{ github.token }}
+          PROBE_DOCKERFILE: ${{ needs.config.outputs.probe_dockerfile }}
+          PROBE_IMAGE: ${{ needs.config.outputs.image }}
+          PROBE_REPORT: ${{ needs.config.outputs.report_path }}
         run: |
           set -euo pipefail
 
@@ -289,12 +293,6 @@ jobs:
           echo "base_image=${base_image}" >> "${GITHUB_OUTPUT}"
           echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
           echo "Upgrade probe: wrote ${PROBE_REPORT}."
-        env:
-          DOCKERFILE: ${{ needs.config.outputs.dockerfile }}
-          PROBE_DOCKERFILE: ${{ needs.config.outputs.probe_dockerfile }}
-          PROBE_IMAGE: ${{ needs.config.outputs.image }}
-          PROBE_REPORT: ${{ needs.config.outputs.report_path }}
-
       - name: Upload dependency report
         uses: actions/upload-artifact@v6
         timeout-minutes: 3
