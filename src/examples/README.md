@@ -31,7 +31,7 @@ services:
 ```bash
 docker run -d --name my-node-app \
   -v $(pwd)/simple-server:/usr/src/app \
-  -v $(pwd)/simple-server/.config:/home/udx/.config \
+  -v $(pwd)/simple-server/.config/worker:/home/udx/.config/worker:ro \
   -p 8080:8080 \
   usabilitydynamics/udx-worker-nodejs:latest
 ```
@@ -73,6 +73,6 @@ When running the examples, two key volume mounts are required:
 
 2. Worker Configuration:
    ```
-   -v ./.config:/home/udx/.config
+   -v ./.config/worker:/home/udx/.config/worker:ro
    ```
    Mounts the worker service configuration
