@@ -44,18 +44,14 @@ services:
     image: usabilitydynamics/udx-worker-nodejs:latest
     volumes:
       - ./simple-server:/usr/src/app
-      - ./simple-server/.config:/home/udx/.config
+      - ./simple-server/.config/worker:/home/udx/.config/worker:ro
     ports:
       - "8080:8080"
 ```
 
-3. Using worker-deployment:
-```bash
-npm install -g @udx/worker-deployment
-cd src/examples
-cp simple-server/deploy.yml deploy.yml
-worker run
-```
+3. For deployment targets, keep image selection, volumes, ports, and release
+   behavior in Docker, Docker Compose, Kubernetes, Rabbit CI, or the target
+   CI/CD platform. Keep Worker runtime process definitions in `services.yaml`.
 
 ## 📁 Directory Structure
 Each example follows this structure:
