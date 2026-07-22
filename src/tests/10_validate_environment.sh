@@ -38,8 +38,13 @@ if ! TAR_VERSION=$(node -e '
 fi
 
 if ! node -e '
-  const [major, minor, patch] = process.argv[1].split(".").map(Number);
-  process.exit(major > 7 || (major === 7 && (minor > 5 || (minor === 5 && patch >= 19))) ? 0 : 1);
+  const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.exec(process.argv[1]);
+  if (!match) process.exit(1);
+  const version = match.slice(1, 4).map(Number);
+  const minimum = [7, 5, 19];
+  const comparison = version.findIndex((part, index) => part !== minimum[index]);
+  const hasPrerelease = process.argv[1].includes("-");
+  process.exit(comparison === -1 ? (hasPrerelease ? 1 : 0) : (version[comparison] > minimum[comparison] ? 0 : 1));
 ' "$TAR_VERSION"; then
   echo "Error: npm bundled tar must be at least 7.5.19. Current: $TAR_VERSION"
   exit 4
