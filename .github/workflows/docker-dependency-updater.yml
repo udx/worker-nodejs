@@ -149,10 +149,7 @@ jobs:
 
     outputs:
       apt_count: ${{ steps.probe.outputs.apt_count }}
-      base_image: ${{ steps.probe.outputs.base_image }}
       changed: ${{ steps.changes.outputs.changed }}
-      node_version: ${{ steps.probe.outputs.node_version }}
-      npm_version: ${{ steps.probe.outputs.npm_version }}
       pr_url: ${{ steps.create-pr.outputs.pull-request-url }}
 
     permissions:
@@ -170,7 +167,6 @@ jobs:
         timeout-minutes: 8
         env:
           DOCKERFILE: ${{ needs.config.outputs.dockerfile }}
-          GITHUB_TOKEN: ${{ github.token }}
           PROBE_DOCKERFILE: ${{ needs.config.outputs.probe_dockerfile }}
           PROBE_IMAGE: ${{ needs.config.outputs.image }}
           PROBE_REPORT: ${{ needs.config.outputs.report_path }}
@@ -196,56 +192,6 @@ jobs:
             }
           ' "${DOCKERFILE}" > "${PROBE_DOCKERFILE}"
 
-          current_node_version="$(awk -F= '/^ARG NODE_VERSION=/ { print $2; exit }' "${DOCKERFILE}")"
-          current_node_major="${current_node_version%%.*}"
-          current_npm_version="$(awk -F= '/^ARG NPM_VERSION=/ { print $2; exit }' "${DOCKERFILE}")"
-          test -n "${current_node_major}"
-          test -n "${current_npm_version}"
-
-          node_version="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL https://nodejs.org/dist/index.json \
-            | jq -r --arg major "${current_node_major}" \
-              '[.[] | select(.lts != false) | .version | ltrimstr("v") | select(startswith($major + "."))][0]')"
-          test -n "${node_version}"
-
-          latest_npm_version="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-            https://registry.npmjs.org/npm/latest | jq -r '.version')"
-          test -n "${latest_npm_version}"
-
-          npm_engines="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-            "https://registry.npmjs.org/npm/${latest_npm_version}" | jq -r '.engines.node // empty')"
-          npm_version="${current_npm_version}"
-          if [ -n "${npm_engines}" ] && node - "${node_version}" "${npm_engines}" <<'NODE'
-          const { execFileSync } = require("node:child_process");
-          const path = require("node:path");
-          const [nodeVersion, range] = process.argv.slice(2);
-          const npmRoot = execFileSync("npm", ["root", "--global"], { encoding: "utf8" }).trim();
-          const semver = require(path.join(npmRoot, "npm/node_modules/semver"));
-          process.exit(semver.satisfies(nodeVersion, range) ? 0 : 1);
-          NODE
-          then
-            npm_version="${latest_npm_version}"
-          else
-            echo "Keeping npm ${current_npm_version}: ${latest_npm_version} does not explicitly support Node.js ${node_version}."
-          fi
-
-          base_image="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/udx/worker/releases/latest" \
-            | jq -r '.tag_name | ltrimstr("v")')"
-          test -n "${base_image}"
-          base_image_ref="usabilitydynamics/udx-worker:${base_image}"
-
-          perl -0pi -e \
-            "s#^FROM usabilitydynamics/udx-worker:.*#FROM ${base_image_ref}#m" \
-            "${PROBE_DOCKERFILE}"
-          perl -0pi -e \
-            "s/^ARG NODE_VERSION=.*/ARG NODE_VERSION=${node_version}/m" \
-            "${PROBE_DOCKERFILE}"
-          perl -0pi -e \
-            "s/^ARG NPM_VERSION=.*/ARG NPM_VERSION=${npm_version}/m" \
-            "${PROBE_DOCKERFILE}"
-
           apt_packages=(xz-utils)
 
           {
@@ -265,9 +211,8 @@ jobs:
 
           dpkg-query -W -f='${binary:Package}\t${Version}\n' "$@"
           EOF
-          strategy_summary="Use the latest udx-worker release, latest Node.js "
-          strategy_summary="${strategy_summary}LTS release within the current major, the latest npm "
-          strategy_summary="${strategy_summary}release compatible with that Node.js version, and a no-pin apt probe for xz-utils."
+          base_image="$(awk '$1 == "FROM" { print $2; exit }' "${DOCKERFILE}")"
+          strategy_summary="Render a temporary Dockerfile with apt package pins removed, build it against the configured base image, then read installed versions with dpkg-query."
 
           non_apt_path="${probe_dir}/non-apt.json"
           node <<'NODE' > "${non_apt_path}"
@@ -302,18 +247,14 @@ jobs:
             --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg base_image "${base_image}" \
             --arg dockerfile "${DOCKERFILE}" \
-            --arg node_version "${node_version}" \
-            --arg npm_version "${npm_version}" \
             --arg probe_dockerfile "${PROBE_DOCKERFILE}" \
             --arg strategy_summary "${strategy_summary}" \
             --slurpfile non_apt "${non_apt_path}" \
             --rawfile apt_versions "${apt_versions_path}" \
             '{
               generated_at: $generated_at,
-              method: "worker-nodejs dependency probe",
-              base_image: "usabilitydynamics/udx-worker:" + $base_image,
-              node_version: $node_version,
-              npm_version: $npm_version,
+              method: "no-pin apt probe",
+              base_image: $base_image,
               strategy: {
                 summary: $strategy_summary,
                 dockerfile: $dockerfile,
@@ -333,9 +274,6 @@ jobs:
 
           apt_count="$(jq '.dependencies.apt | length' "${PROBE_REPORT}")"
           echo "apt_count=${apt_count}" >> "${GITHUB_OUTPUT}"
-          echo "base_image=${base_image}" >> "${GITHUB_OUTPUT}"
-          echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
-          echo "npm_version=${npm_version}" >> "${GITHUB_OUTPUT}"
           echo "Upgrade probe: wrote ${PROBE_REPORT}."
       - name: Upload dependency report
         uses: actions/upload-artifact@v6
@@ -346,70 +284,13 @@ jobs:
             ${{ needs.config.outputs.report_path }}
             ${{ needs.config.outputs.probe_dockerfile }}
 
-      - name: Check Copilot availability
-        id: copilot-availability
-        timeout-minutes: 1
-        run: |
-          set -euo pipefail
-
-          if [ -n "${COPILOT_GITHUB_TOKEN:-}" ]; then
-            echo "available=true" >> "${GITHUB_OUTPUT}"
-            echo "Copilot CLI review is available."
-          else
-            echo "available=false" >> "${GITHUB_OUTPUT}"
-            echo "Copilot CLI review skipped; COPILOT_GITHUB_TOKEN is not set."
-          fi
-        env:
-          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-
-      - name: Update Dockerfile pins
-        timeout-minutes: 3
-        run: |
-          set -euo pipefail
-
-          base_image="$(jq -r '.base_image' "${REPORT_PATH}")"
-          node_version="$(jq -r '.node_version' "${REPORT_PATH}")"
-          npm_version="$(jq -r '.npm_version' "${REPORT_PATH}")"
-          xz_version="$(jq -r \
-            '.dependencies.apt[] | select(.name == "xz-utils") | .installed' \
-            "${REPORT_PATH}")"
-
-          test -n "${base_image}"
-          test -n "${node_version}"
-          test -n "${npm_version}"
-          test -n "${xz_version}"
-
-          perl -0pi -e \
-            "s#^FROM usabilitydynamics/udx-worker:.*#FROM ${base_image}#m" \
-            "${DOCKERFILE}"
-          perl -0pi -e \
-            "s/^ARG NODE_VERSION=.*/ARG NODE_VERSION=${node_version}/m" \
-            "${DOCKERFILE}"
-          perl -0pi -e \
-            "s/^ARG NPM_VERSION=.*/ARG NPM_VERSION=${npm_version}/m" \
-            "${DOCKERFILE}"
-          perl -0pi -e \
-            "s/xz-utils=[^[:space:]\\]+/xz-utils=${xz_version}/" \
-            "${DOCKERFILE}"
-
-          echo "Upgrade pins:"
-          echo "- Base image: ${base_image}"
-          echo "- Node.js: ${node_version}"
-          echo "- npm: ${npm_version}"
-          echo "- xz-utils: ${xz_version}"
-        env:
-          DOCKERFILE: ${{ needs.config.outputs.dockerfile }}
-          REPORT_PATH: ${{ needs.config.outputs.report_path }}
-
       - name: Set up Node.js for Copilot CLI
-        if: steps.copilot-availability.outputs.available == 'true'
         uses: actions/setup-node@v6
         timeout-minutes: 3
         with:
           node-version: "22"
 
       - name: Install Copilot CLI
-        if: steps.copilot-availability.outputs.available == 'true'
         timeout-minutes: 3
         run: |
           npm install -g "@github/copilot@${COPILOT_CLI_VERSION}"
@@ -417,8 +298,7 @@ jobs:
         env:
           COPILOT_CLI_VERSION: ${{ needs.config.outputs.copilot_cli_version }}
 
-      - name: Review Dockerfile with Copilot CLI
-        if: steps.copilot-availability.outputs.available == 'true'
+      - name: Update Dockerfile with Copilot CLI
         timeout-minutes: 8
         run: |
           set -euo pipefail
@@ -430,6 +310,11 @@ jobs:
           test -s "${REPORT_PATH}"
           jq -e '.dependencies.apt and .dependencies.non_apt' \
             "${REPORT_PATH}" >/dev/null
+
+          if [ -z "${COPILOT_GITHUB_TOKEN:-}" ]; then
+            echo "COPILOT_GITHUB_TOKEN secret is required for non-apt dependency updates." >&2
+            exit 1
+          fi
 
           prompt_path=".tmp/dependency-upgrade/copilot-prompt.md"
           mkdir -p "$(dirname "${prompt_path}")"
@@ -445,8 +330,7 @@ jobs:
 
           copilot_args=(
             --prompt "$(cat "${prompt_path}")"
-            --allow-tool=write
-            --deny-tool=shell
+            --allow-all-tools
             --allow-all-urls
             --no-ask-user
             --no-auto-update
@@ -511,13 +395,8 @@ jobs:
             echo "## Evidence"
             echo
             echo "- Probe report artifact: \`${REPORT_PATH}\`"
-            if [ "${COPILOT_AVAILABLE}" = "true" ]; then
-              echo "- Copilot CLI review: enabled"
-            else
-              echo "- Copilot CLI review: skipped; token not configured"
-            fi
-            if [ "${COPILOT_AVAILABLE}" = "true" ] &&
-              [ "${UPLOAD_COPILOT_SESSION}" = "true" ]; then
+            echo "- Copilot CLI: updated non-apt dependencies"
+            if [ "${UPLOAD_COPILOT_SESSION}" = "true" ]; then
               echo "- Copilot session artifact: \`copilot-docker-dependency-session.md\`"
             fi
             echo "## Diff"
@@ -528,7 +407,6 @@ jobs:
           } > docker-dependency-pr-body.md
           echo "Upgrade PR body: prepared docker-dependency-pr-body.md"
         env:
-          COPILOT_AVAILABLE: ${{ steps.copilot-availability.outputs.available }}
           REPORT_PATH: ${{ needs.config.outputs.report_path }}
           UPLOAD_COPILOT_SESSION: ${{ needs.config.outputs.upload_copilot_session }}
 
@@ -544,7 +422,6 @@ jobs:
       - name: Upload Copilot session
         if: >-
           always() &&
-            steps.copilot-availability.outputs.available == 'true' &&
             needs.config.outputs.upload_copilot_session == 'true'
         uses: actions/upload-artifact@v6
         timeout-minutes: 3
