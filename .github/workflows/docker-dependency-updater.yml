@@ -3,7 +3,7 @@ name: udx-automation / worker-nodejs dependency upgrade
 
 "on":
   schedule:
-    - cron: "0 5 * * 1"
+    - cron: "0 5 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -152,6 +152,7 @@ jobs:
       base_image: ${{ steps.probe.outputs.base_image }}
       changed: ${{ steps.changes.outputs.changed }}
       node_version: ${{ steps.probe.outputs.node_version }}
+      npm_version: ${{ steps.probe.outputs.npm_version }}
       pr_url: ${{ steps.create-pr.outputs.pull-request-url }}
 
     permissions:
@@ -204,6 +205,10 @@ jobs:
               '[.[] | select(.lts != false) | .version | ltrimstr("v") | select(startswith($major + "."))][0]')"
           test -n "${node_version}"
 
+          npm_version="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+            https://registry.npmjs.org/npm/latest | jq -r '.version')"
+          test -n "${npm_version}"
+
           base_image="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -217,6 +222,9 @@ jobs:
             "${PROBE_DOCKERFILE}"
           perl -0pi -e \
             "s/^ARG NODE_VERSION=.*/ARG NODE_VERSION=${node_version}/m" \
+            "${PROBE_DOCKERFILE}"
+          perl -0pi -e \
+            "s/^ARG NPM_VERSION=.*/ARG NPM_VERSION=${npm_version}/m" \
             "${PROBE_DOCKERFILE}"
 
           apt_packages=(xz-utils)
@@ -239,8 +247,8 @@ jobs:
           dpkg-query -W -f='${binary:Package}\t${Version}\n' "$@"
           EOF
           strategy_summary="Use the latest udx-worker release, latest Node.js "
-          strategy_summary="${strategy_summary}LTS release within the current major, and a no-pin apt "
-          strategy_summary="${strategy_summary}probe for xz-utils."
+          strategy_summary="${strategy_summary}LTS release within the current major, latest npm "
+          strategy_summary="${strategy_summary}release, and a no-pin apt probe for xz-utils."
 
           non_apt_path="${probe_dir}/non-apt.json"
           node <<'NODE' > "${non_apt_path}"
@@ -276,6 +284,7 @@ jobs:
             --arg base_image "${base_image}" \
             --arg dockerfile "${DOCKERFILE}" \
             --arg node_version "${node_version}" \
+            --arg npm_version "${npm_version}" \
             --arg probe_dockerfile "${PROBE_DOCKERFILE}" \
             --arg strategy_summary "${strategy_summary}" \
             --slurpfile non_apt "${non_apt_path}" \
@@ -285,6 +294,7 @@ jobs:
               method: "worker-nodejs dependency probe",
               base_image: "usabilitydynamics/udx-worker:" + $base_image,
               node_version: $node_version,
+              npm_version: $npm_version,
               strategy: {
                 summary: $strategy_summary,
                 dockerfile: $dockerfile,
@@ -306,6 +316,7 @@ jobs:
           echo "apt_count=${apt_count}" >> "${GITHUB_OUTPUT}"
           echo "base_image=${base_image}" >> "${GITHUB_OUTPUT}"
           echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
+          echo "npm_version=${npm_version}" >> "${GITHUB_OUTPUT}"
           echo "Upgrade probe: wrote ${PROBE_REPORT}."
       - name: Upload dependency report
         uses: actions/upload-artifact@v6
@@ -339,12 +350,14 @@ jobs:
 
           base_image="$(jq -r '.base_image' "${REPORT_PATH}")"
           node_version="$(jq -r '.node_version' "${REPORT_PATH}")"
+          npm_version="$(jq -r '.npm_version' "${REPORT_PATH}")"
           xz_version="$(jq -r \
             '.dependencies.apt[] | select(.name == "xz-utils") | .installed' \
             "${REPORT_PATH}")"
 
           test -n "${base_image}"
           test -n "${node_version}"
+          test -n "${npm_version}"
           test -n "${xz_version}"
 
           perl -0pi -e \
@@ -354,12 +367,16 @@ jobs:
             "s/^ARG NODE_VERSION=.*/ARG NODE_VERSION=${node_version}/m" \
             "${DOCKERFILE}"
           perl -0pi -e \
+            "s/^ARG NPM_VERSION=.*/ARG NPM_VERSION=${npm_version}/m" \
+            "${DOCKERFILE}"
+          perl -0pi -e \
             "s/xz-utils=[^[:space:]\\]+/xz-utils=${xz_version}/" \
             "${DOCKERFILE}"
 
           echo "Upgrade pins:"
           echo "- Base image: ${base_image}"
           echo "- Node.js: ${node_version}"
+          echo "- npm: ${npm_version}"
           echo "- xz-utils: ${xz_version}"
         env:
           DOCKERFILE: ${{ needs.config.outputs.dockerfile }}
