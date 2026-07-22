@@ -4,8 +4,9 @@ FROM usabilitydynamics/udx-worker:0.47.0
 # Add metadata labels
 LABEL version="0.32.0"
 
-# Set build arguments for Node.js version and application port
+# Set build arguments for Node.js, npm, and application port
 ARG NODE_VERSION=24.18.0
+ARG NPM_VERSION=12.0.1
 ARG APP_PORT=8080
 
 # Add Node.js to PATH
@@ -48,6 +49,10 @@ RUN set -ex && \
     # Verify installation and resolution path
     node --version && \
     command -v npm && head -n 1 "$(command -v npm)" && npm --version && \
+    npm install --global "npm@${NPM_VERSION}" && \
+    npm --version && \
+    npm cache clean --force && \
+    rm -rf /root/.npm && \
     rm -rf /tmp/*
 
 # Remove xz-utils as it's no longer needed
