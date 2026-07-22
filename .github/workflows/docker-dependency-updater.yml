@@ -198,16 +198,35 @@ jobs:
 
           current_node_version="$(awk -F= '/^ARG NODE_VERSION=/ { print $2; exit }' "${DOCKERFILE}")"
           current_node_major="${current_node_version%%.*}"
+          current_npm_version="$(awk -F= '/^ARG NPM_VERSION=/ { print $2; exit }' "${DOCKERFILE}")"
           test -n "${current_node_major}"
+          test -n "${current_npm_version}"
 
           node_version="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL https://nodejs.org/dist/index.json \
             | jq -r --arg major "${current_node_major}" \
               '[.[] | select(.lts != false) | .version | ltrimstr("v") | select(startswith($major + "."))][0]')"
           test -n "${node_version}"
 
-          npm_version="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+          latest_npm_version="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
             https://registry.npmjs.org/npm/latest | jq -r '.version')"
-          test -n "${npm_version}"
+          test -n "${latest_npm_version}"
+
+          npm_engines="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+            "https://registry.npmjs.org/npm/${latest_npm_version}" | jq -r '.engines.node // empty')"
+          npm_version="${current_npm_version}"
+          if [ -n "${npm_engines}" ] && node - "${node_version}" "${npm_engines}" <<'NODE'
+          const { execFileSync } = require("node:child_process");
+          const path = require("node:path");
+          const [nodeVersion, range] = process.argv.slice(2);
+          const npmRoot = execFileSync("npm", ["root", "--global"], { encoding: "utf8" }).trim();
+          const semver = require(path.join(npmRoot, "npm/node_modules/semver"));
+          process.exit(semver.satisfies(nodeVersion, range) ? 0 : 1);
+          NODE
+          then
+            npm_version="${latest_npm_version}"
+          else
+            echo "Keeping npm ${current_npm_version}: ${latest_npm_version} does not explicitly support Node.js ${node_version}."
+          fi
 
           base_image="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
@@ -247,8 +266,8 @@ jobs:
           dpkg-query -W -f='${binary:Package}\t${Version}\n' "$@"
           EOF
           strategy_summary="Use the latest udx-worker release, latest Node.js "
-          strategy_summary="${strategy_summary}LTS release within the current major, latest npm "
-          strategy_summary="${strategy_summary}release, and a no-pin apt probe for xz-utils."
+          strategy_summary="${strategy_summary}LTS release within the current major, the latest npm "
+          strategy_summary="${strategy_summary}release compatible with that Node.js version, and a no-pin apt probe for xz-utils."
 
           non_apt_path="${probe_dir}/non-apt.json"
           node <<'NODE' > "${non_apt_path}"

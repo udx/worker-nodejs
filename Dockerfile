@@ -51,6 +51,8 @@ RUN set -ex && \
     command -v npm && head -n 1 "$(command -v npm)" && npm --version && \
     npm install --global "npm@${NPM_VERSION}" && \
     npm --version && \
+    npm cache clean --force && \
+    rm -rf /root/.npm && \
     rm -rf /tmp/*
 
 # Remove xz-utils as it's no longer needed

@@ -25,8 +25,18 @@ if ! command -v worker >/dev/null 2>&1; then
   exit 3
 fi
 
-# Verify that npm's bundled tar includes the security fix.
-TAR_VERSION=$(node -p 'require("/usr/local/node/lib/node_modules/npm/node_modules/tar/package.json").version')
+# Verify that npm's bundled tar includes the security fix. Resolve npm's global
+# installation dynamically so the test follows the installed Node.js layout.
+if ! TAR_VERSION=$(node -e '
+  const { execFileSync } = require("node:child_process");
+  const path = require("node:path");
+  const npmRoot = execFileSync("npm", ["root", "--global"], { encoding: "utf8" }).trim();
+  process.stdout.write(require(path.join(npmRoot, "npm/node_modules/tar/package.json")).version);
+'); then
+  echo "Error: unable to determine npm bundled tar version."
+  exit 4
+fi
+
 if ! node -e '
   const [major, minor, patch] = process.argv[1].split(".").map(Number);
   process.exit(major > 7 || (major === 7 && (minor > 5 || (minor === 5 && patch >= 19))) ? 0 : 1);
