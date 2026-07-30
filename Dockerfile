@@ -5,8 +5,8 @@ FROM usabilitydynamics/udx-worker:0.47.0
 LABEL version="0.32.0"
 
 # Set build arguments for Node.js, npm, and application port
-ARG NODE_VERSION=24.18.0
-ARG NPM_VERSION=12.0.1
+ARG NODE_VERSION=24.18.1
+ARG NPM_VERSION=12.0.2
 ARG APP_PORT=8080
 
 # Add Node.js to PATH
@@ -28,7 +28,7 @@ WORKDIR /tmp
 # Install required packages for Node.js extraction
 RUN set -ex && \
     apt-get update && \
-    apt-get install -y --no-install-recommends xz-utils=5.8.1-1build2 && \
+    apt-get install -y --no-install-recommends xz-utils=5.8.1-1ubuntu0.1 && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js
