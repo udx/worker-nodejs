@@ -197,10 +197,12 @@ jobs:
           {
             echo
             echo "# Dependency probe keeps apt packages installed for dpkg-query."
+            echo "USER root"
             echo "RUN set -ex && \\"
             echo "    apt-get update && \\"
             echo "    apt-get install -y --no-install-recommends ${apt_packages[*]} && \\"
             echo "    rm -rf /var/lib/apt/lists/*"
+            echo 'USER "${USER}"'
           } >> "${PROBE_DOCKERFILE}"
 
           docker build --pull --no-cache -f "${PROBE_DOCKERFILE}" \
