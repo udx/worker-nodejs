@@ -1,12 +1,12 @@
 # Use a pinned udx-worker release
-FROM usabilitydynamics/udx-worker:0.49.0
+FROM usabilitydynamics/udx-worker:0.58.0
 
 # Add metadata labels
 LABEL version="0.32.0"
 
 # Set build arguments for Node.js, npm, and application port
-ARG NODE_VERSION=24.21.0
-ARG NPM_VERSION=12.1.0
+ARG NODE_VERSION=24.22.0
+ARG NPM_VERSION=12.2.0
 ARG APP_PORT=8080
 
 # Add Node.js to PATH
