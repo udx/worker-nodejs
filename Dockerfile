@@ -5,7 +5,7 @@ FROM usabilitydynamics/udx-worker:0.58.0
 LABEL version="0.32.0"
 
 # Set build arguments for Node.js, npm, and application port
-ARG NODE_VERSION=24.22.0
+ARG NODE_VERSION=24.22.1
 ARG NPM_VERSION=12.2.0
 ARG APP_PORT=8080
 
