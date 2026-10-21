@@ -1,5 +1,5 @@
 # Use a pinned udx-worker release
-FROM usabilitydynamics/udx-worker:0.58.0
+FROM usabilitydynamics/udx-worker:0.59.0
 
 # Add metadata labels
 LABEL version="0.32.0"
@@ -28,7 +28,7 @@ WORKDIR /tmp
 # Install required packages for Node.js extraction
 RUN set -ex && \
     apt-get update && \
-    apt-get install -y --no-install-recommends xz-utils=5.8.1-1ubuntu0.1 && \
+    apt-get install -y --no-install-recommends xz-utils=5.8.3-1ubuntu0.1 && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js
