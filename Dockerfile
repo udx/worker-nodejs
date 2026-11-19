@@ -6,7 +6,7 @@ LABEL version="0.32.0"
 
 # Set build arguments for Node.js, npm, and application port
 ARG NODE_VERSION=24.22.3
-ARG NPM_VERSION=12.2.2
+ARG NPM_VERSION=12.2.3
 ARG APP_PORT=8080
 
 # Add Node.js to PATH
