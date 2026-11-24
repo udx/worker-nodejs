@@ -1,5 +1,5 @@
 # Use a pinned udx-worker release
-FROM usabilitydynamics/udx-worker:0.59.0
+FROM usabilitydynamics/udx-worker:0.63.0
 
 # Add metadata labels
 LABEL version="0.32.0"
